@@ -532,12 +532,12 @@ static void sub_68F41A(rct_peep *peep, int index)
 					}
 
 					if (peep->hunger <= 10 &&
-						!peep_has_food(peep)){
+						!peep_has_consumable(peep)){
 						possible_thoughts[num_thoughts++] = PEEP_THOUGHT_TYPE_HUNGRY;
 					}
 
 					if (peep->thirst <= 25 &&
-						!peep_has_food(peep)){
+						!peep_has_consumable(peep)){
 						possible_thoughts[num_thoughts++] = PEEP_THOUGHT_TYPE_THIRSTY;
 					}
 
