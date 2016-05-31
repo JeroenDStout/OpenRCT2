@@ -66,8 +66,10 @@ static void sub_68F41A(rct_peep *peep, int index);
 static void peep_update(rct_peep *peep);
 static int peep_has_empty_container(rct_peep* peep);
 static int peep_has_drink(rct_peep* peep);
-static int peep_has_food_standard_flag(rct_peep* peep);
-static int peep_has_food_extra_flag(rct_peep* peep);
+static int peep_has_foodstuff_standard_flag(rct_peep* peep);
+static int peep_has_foodstuff_extra_flag(rct_peep* peep);
+static int peep_has_consumable_standard_flag(rct_peep* peep);
+static int peep_has_consumable_extra_flag(rct_peep* peep);
 static int peep_empty_container_standard_flag(rct_peep* peep);
 static int peep_empty_container_extra_flag(rct_peep* peep);
 static int peep_should_find_bench(rct_peep* peep);
@@ -695,7 +697,7 @@ static void sub_68F41A(rct_peep *peep, int index)
 	}
 	// 68FA89
 	if (peep->var_42 == 0 &&
-		peep_has_food(peep)){
+		peep_has_consumable(peep)){
 		peep->var_42 += 3;
 	}
 
@@ -714,7 +716,7 @@ static void sub_68F41A(rct_peep *peep, int index)
 		}
 
 		if (peep->var_42 == 0){
-			int chosen_food = bitscanforward(peep_has_food_standard_flag(peep));
+			int chosen_food = bitscanforward(peep_has_consumable_standard_flag(peep));
 			if (chosen_food != -1){
 				peep->item_standard_flags &= ~(1 << chosen_food);
 
@@ -727,7 +729,7 @@ static void sub_68F41A(rct_peep *peep, int index)
 				peep_update_sprite_type(peep);
 			}
 			else{
-				chosen_food = bitscanforward(peep_has_food_extra_flag(peep));
+				chosen_food = bitscanforward(peep_has_consumable_extra_flag(peep));
 				if (chosen_food != -1){
 					peep->item_extra_flags &= ~(1 << chosen_food);
 					uint8 discard_container = RCT2_ADDRESS(0x00982342, uint8)[chosen_food];
@@ -1457,7 +1459,7 @@ void peep_update_falling(rct_peep* peep){
  */
 void peep_try_get_up_from_sitting(rct_peep* peep){
 	// Eats all food first
-	if (peep_has_food(peep))return;
+	if (peep_has_consumable(peep))return;
 
 	peep->time_to_sitdown--;
 	if (peep->time_to_sitdown) return;
@@ -1533,7 +1535,7 @@ void peep_update_sitting(rct_peep* peep){
 			return;
 		}
 
-		if (peep_has_food(peep)){
+		if (peep_has_consumable(peep)){
 			if ((scenario_rand() & 0xFFFF) > 1310){
 				peep_try_get_up_from_sitting(peep);
 				return;
@@ -4430,7 +4432,7 @@ static void peep_update_watching(rct_peep* peep){
 			peep->action = 0xFE;
 		}
 		else{
-			if (peep_has_food(peep)){
+			if (peep_has_consumable(peep)){
 				if ((scenario_rand() & 0xFFFF) <= 1310){
 					peep->action = PEEP_ACTION_EAT_FOOD;
 					peep->action_frame = 0;
@@ -5537,7 +5539,7 @@ static void peep_update_walking(rct_peep* peep){
 
 	if (peep->bathroom > 140)return;
 
-	uint16 chance = peep_has_food(peep) ? 13107 : 2849;
+	uint16 chance = peep_has_consumable(peep) ? 13107 : 2849;
 
 	if ((scenario_rand() & 0xFFFF) > chance)return;
 
@@ -6521,7 +6523,54 @@ bool peep_has_item(rct_peep *peep, int peepItem)
 	}
 }
 
-static int peep_has_food_standard_flag(rct_peep* peep){
+static int peep_has_foodstuff_standard_flag(rct_peep* peep) {
+	return peep->item_standard_flags &(
+		PEEP_ITEM_BURGER |
+		PEEP_ITEM_FRIES |
+		PEEP_ITEM_ICE_CREAM |
+		PEEP_ITEM_COTTON_CANDY |
+		PEEP_ITEM_PIZZA |
+		PEEP_ITEM_POPCORN |
+		PEEP_ITEM_HOT_DOG |
+		PEEP_ITEM_TENTACLE |
+		PEEP_ITEM_CANDY_APPLE |
+		PEEP_ITEM_DONUT |
+		PEEP_ITEM_CHICKEN);
+}
+
+static int peep_has_foodstuff_extra_flag(rct_peep* peep) {
+	return peep->item_extra_flags &(
+		PEEP_ITEM_PRETZEL |
+		PEEP_ITEM_FUNNEL_CAKE |
+		PEEP_ITEM_BEEF_NOODLES |
+		PEEP_ITEM_FRIED_RICE_NOODLES |
+		PEEP_ITEM_WONTON_SOUP |
+		PEEP_ITEM_MEATBALL_SOUP |
+		PEEP_ITEM_SOYBEAN_MILK |
+		PEEP_ITEM_SUB_SANDWICH |
+		PEEP_ITEM_COOKIE |
+		PEEP_ITEM_ROAST_SAUSAGE
+		);
+}
+
+static int peep_has_drink_standard_flag(rct_peep* peep) {
+	return peep->item_standard_flags &(
+		PEEP_ITEM_DRINK |
+		PEEP_ITEM_COFFEE |
+		PEEP_ITEM_LEMONADE);
+}
+
+static int peep_has_drink_extra_flag(rct_peep* peep) {
+	return peep->item_extra_flags &(
+		PEEP_ITEM_CHOCOLATE |
+		PEEP_ITEM_ICED_TEA |
+		PEEP_ITEM_FRUIT_JUICE |
+		PEEP_ITEM_SOYBEAN_MILK |
+		PEEP_ITEM_SU_JONGKWA
+		);
+}
+
+static int peep_has_consumable_standard_flag(rct_peep* peep){
 	return peep->item_standard_flags &(
 		PEEP_ITEM_DRINK |
 		PEEP_ITEM_BURGER |
@@ -6539,7 +6588,7 @@ static int peep_has_food_standard_flag(rct_peep* peep){
 		PEEP_ITEM_LEMONADE);
 }
 
-static int peep_has_food_extra_flag(rct_peep* peep){
+static int peep_has_consumable_extra_flag(rct_peep* peep){
 	return peep->item_extra_flags &(
 		PEEP_ITEM_PRETZEL |
 		PEEP_ITEM_CHOCOLATE |
@@ -6559,38 +6608,59 @@ static int peep_has_food_extra_flag(rct_peep* peep){
 }
 
 /**
- * To simplify check of 0x36BA3E0 and 0x11FF78
- * returns 0 on no food.
- */
-int peep_has_food(rct_peep* peep){
-	return peep_has_food_standard_flag(peep) ||
-		peep_has_food_extra_flag(peep);
-}
+* returns 0 on no (SOLID) food.
+*/
 
-static int peep_has_drink_standard_flag(rct_peep* peep){
-	return peep->item_standard_flags &(
-		PEEP_ITEM_DRINK |
-		PEEP_ITEM_COFFEE |
-		PEEP_ITEM_LEMONADE);
-}
-
-static int peep_has_drink_extra_flag(rct_peep* peep){
-	return peep->item_extra_flags &(
-		PEEP_ITEM_CHOCOLATE |
-		PEEP_ITEM_ICED_TEA |
-		PEEP_ITEM_FRUIT_JUICE |
-		PEEP_ITEM_SOYBEAN_MILK |
-		PEEP_ITEM_SU_JONGKWA
-		);
+int peep_has_foodstuff(rct_peep* peep) {
+	return peep_has_foodstuff_standard_flag(peep) ||
+		peep_has_foodstuff_extra_flag(peep);
 }
 
 /**
- * To simplify check of NOT(0x12BA3C0 and 0x118F48)
- * returns 0 on no food.
- */
-static int peep_has_drink(rct_peep* peep){
+* returns 0 on no drink.
+*/
+
+int peep_has_drink(rct_peep* peep){
 	return peep_has_drink_standard_flag(peep) ||
 		peep_has_drink_extra_flag(peep);
+}
+
+/**
+* returns 0 on no
+*/
+int peep_has_consumable(rct_peep* peep) {
+	return peep_has_consumable_standard_flag(peep) ||
+		peep_has_consumable_extra_flag(peep);
+}
+
+uint32 peep_get_foodstuff(rct_peep* peep) {
+	int flag = peep_has_foodstuff_standard_flag(peep);
+	if (flag)
+		return bitscanforward(flag);
+	flag = peep_has_foodstuff_extra_flag(peep);
+	if (flag)
+		return bitscanforward(flag) + 32;
+	return 0;
+}
+
+uint32 peep_get_drink(rct_peep* peep) {
+	int flag = peep_has_drink_standard_flag(peep);
+	if (flag)
+		return bitscanforward(flag);
+	flag = peep_has_drink_extra_flag(peep);
+	if (flag)
+		return bitscanforward(flag) + 32;
+	return 0;
+}
+
+uint32 peep_get_consumable(rct_peep* peep) {
+	int flag = peep_has_consumable_standard_flag(peep);
+	if (flag)
+		return bitscanforward(flag);
+	flag = peep_has_consumable_extra_flag(peep);
+	if (flag)
+		return bitscanforward(flag) + 32;
+	return 0;
 }
 
 static int peep_empty_container_standard_flag(rct_peep* peep){
@@ -6621,7 +6691,7 @@ static int peep_has_empty_container(rct_peep* peep){
 /* Simplifies 0x690582. Returns 1 if should find bench*/
 static int peep_should_find_bench(rct_peep* peep){
 	if (!(peep->peep_flags & PEEP_FLAGS_LEAVING_PARK)){
-		if (peep_has_food(peep)){
+		if (peep_has_consumable(peep)){
 			if (peep->hunger < 128 || peep->happiness < 128){
 				if (!(peep->next_var_29 & 0x1C)){
 					return 1;
@@ -8236,7 +8306,7 @@ static int guest_path_finding(rct_peep* peep)
 	}
 
 
-	if (!peep_has_food(peep) && (scenario_rand() & 0xFFFF) >= 2184) {
+	if (!peep_has_consumable(peep) && (scenario_rand() & 0xFFFF) >= 2184) {
 		uint8 adjustedEdges = edges;
 		for (int chosenDirection = 0; chosenDirection < 4; chosenDirection++) {
 			// If there is no path in that direction try another
@@ -8867,10 +8937,10 @@ static bool sub_69AF1E(rct_peep *peep, int rideIndex, int shopItem, money32 pric
 
 	if (shop_item_is_food_or_drink(shopItem)) {
 		int food = -1;
-		if ((food = peep_has_food_standard_flag(peep))) {
+		if ((food = peep_has_consumable_standard_flag(peep))) {
 			peep_insert_new_thought(peep, PEEP_THOUGHT_TYPE_HAVENT_FINISHED, bitscanforward(food));
 			return 0;
-		} else if ((food = peep_has_food_extra_flag(peep))) {
+		} else if ((food = peep_has_consumable_extra_flag(peep))) {
 			peep_insert_new_thought(peep, PEEP_THOUGHT_TYPE_HAVENT_FINISHED, bitscanforward(food) + 32);
 			return 0;
 		} else if (peep->nausea >= 145)
@@ -9951,7 +10021,7 @@ static void peep_pick_ride_to_go_on(rct_peep *peep)
 	if (peep->state != PEEP_STATE_WALKING) return;
 	if (peep->guest_heading_to_ride_id != 255) return;
 	if (peep->peep_flags & PEEP_FLAGS_LEAVING_PARK) return;
-	if (peep_has_food(peep)) return;
+	if (peep_has_consumable(peep)) return;
 	if (peep->x == (sint16)0x8000) return;
 
 	RCT2_GLOBAL(0x00F1AD98, uint32) = 0;
@@ -10180,7 +10250,7 @@ static void peep_head_for_nearest_ride_with_flags(rct_peep *peep, int rideTypeFl
 		}
 	}
 
-	if ((rideTypeFlags & RIDE_TYPE_FLAG_IS_BATHROOM) && peep_has_food(peep)) {
+	if ((rideTypeFlags & RIDE_TYPE_FLAG_IS_BATHROOM) && peep_has_consumable(peep)) {
 		return;
 	}
 
