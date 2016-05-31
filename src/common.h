@@ -49,4 +49,6 @@
 	#define FASTCALL
 #endif // PLATFORM_X86
 
+#define STOUT_PEEPS_EXPANDED_EXPERIMENT
+
 #endif
