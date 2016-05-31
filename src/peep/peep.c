@@ -7766,13 +7766,103 @@ static int peep_move_one_tile(uint8 direction, rct_peep* peep){
 		return guest_surface_path_finding(peep);
 	}
 
-	peep->var_78 = direction;
-	peep->destination_x = x + 16;
-	peep->destination_y = y + 16;
-	peep->destination_tolerence = 2;
-	if (peep->state != PEEP_STATE_QUEUING){
-		peep->destination_tolerence = (scenario_rand() & 7) + 2;
+	bool useVanillaWalking = true;
+
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+	
+	useVanillaWalking		= !gConfigPeepsEx.peep_messy_walking;
+
+#endif
+
+	if (useVanillaWalking) {
+		peep->var_78 = direction;
+		peep->destination_x = x + 16;
+		peep->destination_y = y + 16;
+		peep->destination_tolerence = 2;
+		if (peep->state != PEEP_STATE_QUEUING){
+			peep->destination_tolerence = (scenario_rand() & 7) + 2;
+		}
 	}
+	else {
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+		sint16 tileOffsetX = peep->x & ~0xFFE0;
+		sint16 tileOffsetY = peep->y & ~0xFFE0;
+
+		tileOffsetX -= 16;
+		tileOffsetY -= 16;
+
+		tileOffsetX -= scenario_rand_max(TileDirectionDelta[direction].x);
+		tileOffsetY -= scenario_rand_max(TileDirectionDelta[direction].y);
+
+		if (peep->state == PEEP_STATE_WALKING) {
+			sint16 enterOffsetX = 0;
+			sint16 enterOffsetY = 0;
+
+			{
+				switch (peep->peeps_ex_direction_preference) {
+				case 0:
+					enterOffsetX = -7 + scenario_rand_max(4);
+					break;
+				case 8:
+					enterOffsetY = 7 + scenario_rand_max(4);
+					break;
+				case 16:
+					enterOffsetX = 7 + scenario_rand_max(4);
+					break;
+				case 24:
+					enterOffsetY = -7 + scenario_rand_max(4);
+					break;
+				default:
+					break;
+				};
+			}
+
+			tileOffsetX += enterOffsetX;
+			tileOffsetY += enterOffsetY;
+
+			if (peep->peeps_ex_crowded_store > 0) {
+				uint8 crowdedAdd = max((sint16)(50) - (sint16)(peep->peeps_ex_crowded_store), (sint16)(1));
+				tileOffsetX += TileDirectionDelta[(direction+1) & 0x3].x / crowdedAdd;
+				tileOffsetY += TileDirectionDelta[(direction+1) & 0x3].y / crowdedAdd;
+			}
+
+			int offset = 1 + min(10, max(0, (peep->nausea / 50) - 3) + (peep->peeps_ex_crowded_store / 20));
+
+			tileOffsetX += -offset + scenario_rand_max(1 + (offset << 1));
+			tileOffsetY += -offset + scenario_rand_max(1 + (offset << 1));
+
+			sint16 maxTileOffset = 6;
+
+			maxTileOffset += min(peep->peeps_ex_crowded_store / 3, 5);
+
+			if (tileOffsetX < -maxTileOffset)
+				tileOffsetX = -maxTileOffset;
+			else if (tileOffsetX > maxTileOffset)
+				tileOffsetX = maxTileOffset;
+			if (tileOffsetY < -maxTileOffset)
+				tileOffsetY = -maxTileOffset;
+			else if (tileOffsetY > maxTileOffset)
+				tileOffsetY = maxTileOffset;
+		}
+		else {
+			tileOffsetX = 0;
+			tileOffsetY = 0;
+		}
+
+		peep->var_78 = direction;
+		peep->destination_x = x + tileOffsetX + 16;
+		peep->destination_y = y + tileOffsetY + 16;
+		peep->destination_tolerence = 2;
+		if (peep->state != PEEP_STATE_QUEUING) {
+			peep->destination_tolerence = 4;// (scenario_rand() & 7) + 2;
+		}
+
+		if (peep->state == PEEP_STATE_QUEUING) {
+			peep->destination_tolerence = 2;
+		}
+#endif
+	}
+
 	return 0;
 }
 
@@ -10021,6 +10111,13 @@ static bool peep_should_go_on_ride(rct_peep *peep, int rideIndex, int entranceNu
 						// This checks if there's a peep standing still at the very end of the queue.
 						if (maxD <= 13
 							&& lastPeepInQueue->time_in_queue > 10) {
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+								// Push the last peep anyway, so that he reduces his wait distance
+								//	This has no effect when messy queuing is disabled
+							if ((lastPeepInQueue->peeps_ex_queue_wait_distance & 0x7F) > 6) {
+								lastPeepInQueue->peeps_ex_queue_wait_distance -= 1;
+							}
+#endif
 							peep_tried_to_enter_full_queue(peep, rideIndex);
 							return false;
 						}
