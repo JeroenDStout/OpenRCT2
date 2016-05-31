@@ -216,6 +216,13 @@ typedef struct twitch_configuration {
 	uint8 enable_news;
 } twitch_configuration;
 
+#ifdef STOUT_PEEPWATCH_EXPERIMENT
+typedef struct peepwatch_configuration {
+	bool enable_maintain_park;
+	uint32 max_follow;
+} peepwatch_configuration;
+#endif
+
 typedef struct network_configuration {
 	utf8string player_name;
 	uint32 default_port;
@@ -321,6 +328,9 @@ extern network_configuration gConfigNetwork;
 extern notification_configuration gConfigNotifications;
 extern font_configuration gConfigFonts;
 extern title_sequences_configuration gConfigTitleSequences;
+#ifdef STOUT_PEEPWATCH_EXPERIMENT
+extern peepwatch_configuration gConfigPeepwatch;
+#endif
 
 extern uint16 gShortcutKeys[SHORTCUT_COUNT];
 

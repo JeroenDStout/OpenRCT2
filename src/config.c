@@ -240,6 +240,15 @@ config_property_definition _twitchDefinitions[] = {
 	{ offsetof(twitch_configuration, enable_news),						"news",							CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL					}
 };
 
+#ifdef STOUT_PEEPWATCH_EXPERIMENT
+
+config_property_definition _peepwatchDefinitions[] = {
+	{ offsetof(peepwatch_configuration, enable_maintain_park),			"enable_maintain_park",			CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL },
+	{ offsetof(peepwatch_configuration, max_follow),					"max_following",				CONFIG_VALUE_TYPE_UINT32,		12,								NULL }
+};
+
+#endif
+
 config_property_definition _networkDefinitions[] = {
 	{ offsetof(network_configuration, player_name),						"player_name",					CONFIG_VALUE_TYPE_STRING,		{.value_string = "Player" },	NULL					},
 	{ offsetof(network_configuration, default_port),					"default_port",					CONFIG_VALUE_TYPE_UINT32,		NETWORK_DEFAULT_PORT,			NULL					},
@@ -297,6 +306,9 @@ config_section_definition _sectionDefinitions[] = {
 	{ &gConfigInterface, "interface", _interfaceDefinitions, countof(_interfaceDefinitions) },
 	{ &gConfigSound, "sound", _soundDefinitions, countof(_soundDefinitions) },
 	{ &gConfigTwitch, "twitch", _twitchDefinitions, countof(_twitchDefinitions) },
+#ifdef STOUT_PEEPWATCH_EXPERIMENT
+	{ &gConfigPeepwatch, "peepwatch", _peepwatchDefinitions, countof(_peepwatchDefinitions) },
+#endif
 	{ &gConfigNetwork, "network", _networkDefinitions, countof(_networkDefinitions) },
 	{ &gConfigNotifications, "notifications", _notificationsDefinitions, countof(_notificationsDefinitions) },
 	{ &gConfigFonts, "fonts", _fontsDefinitions, countof(_fontsDefinitions) }

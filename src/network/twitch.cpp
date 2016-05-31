@@ -47,6 +47,9 @@ extern "C"
     #include "../util/util.h"
     #include "http.h"
     #include "twitch.h"
+#ifdef STOUT_PEEPWATCH_EXPERIMENT
+	#include "../mode/peepwatch.h"
+#endif
 }
 
 bool gTwitchEnable = false;
@@ -554,9 +557,38 @@ namespace Twitch
         ch = strskipwhitespace(ch);
 
         // Check what the word / token is
-        if (String::Equals(buffer, "news", true))
-        {
+        if (String::Equals(buffer, "news", true)) {
+
+		#ifdef STOUT_PEEPWATCH_EXPERIMENT
+			bool handled = false;
+
+			if (gPeepwatchEnable) {
+				const char * nameEnd = strchrm(ch, ":");
+
+				if (nameEnd) {
+					char giverName[256];
+					safe_strcpy(giverName, ch, Math::Min(sizeof(buffer), (size_t)(nameEnd - ch + 1)));
+
+					const char *actionStart = strskipwhitespace(nameEnd + 1);
+
+					const char * ch2 = strchrm(actionStart, " \t");
+
+					safe_strcpy(buffer, actionStart, Math::Min(sizeof(buffer), (size_t)(ch2 - actionStart + 1)));
+					ch2 = strskipwhitespace(ch2);
+
+					if (String::Equals(buffer, "peepwatch", true)) {
+						peepwatch_handleCommand(giverName, ch2);
+						handled = true;
+					}
+				}
+			}
+			
+			if (!handled) {
+				DoChatMessageNews(ch);
+			}
+		#else
             DoChatMessageNews(ch);
+		#endif
         }
     }
 
@@ -568,7 +600,7 @@ namespace Twitch
             buffer[0] = (utf8)FORMAT_TOPAZ;
             safe_strcpy(buffer + 1, message, sizeof(buffer) - 1);
 
-            // Remove unsupported characters
+            // Remove unsupport characters
             // TODO allow when OpenRCT2 gains unicode support
             char * ch = buffer + 1;
             while (ch[0] != '\0')
