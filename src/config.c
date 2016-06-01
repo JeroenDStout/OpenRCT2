@@ -320,6 +320,9 @@ general_configuration gConfigGeneral;
 interface_configuration gConfigInterface;
 sound_configuration gConfigSound;
 twitch_configuration gConfigTwitch;
+#ifdef STOUT_PEEPWATCH_EXPERIMENT
+peepwatch_configuration gConfigPeepwatch;
+#endif
 network_configuration gConfigNetwork;
 notification_configuration gConfigNotifications;
 font_configuration gConfigFonts;
