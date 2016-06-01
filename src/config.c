@@ -262,9 +262,6 @@ config_property_definition _peepsExDefinitions[] = {
 
 #endif
 
-
-#endif
-
 config_property_definition _networkDefinitions[] = {
 	{ offsetof(network_configuration, player_name),						"player_name",					CONFIG_VALUE_TYPE_STRING,		{.value_string = "Player" },	NULL					},
 	{ offsetof(network_configuration, default_port),					"default_port",					CONFIG_VALUE_TYPE_UINT32,		NETWORK_DEFAULT_PORT,			NULL					},

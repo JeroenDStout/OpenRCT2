@@ -235,9 +235,6 @@ typedef struct peeps_ex_configuration {
 
 #endif
 
-
-#endif
-
 typedef struct network_configuration {
 	utf8string player_name;
 	uint32 default_port;
