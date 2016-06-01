@@ -223,6 +223,21 @@ typedef struct peepwatch_configuration {
 } peepwatch_configuration;
 #endif
 
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+
+typedef struct peeps_ex_configuration {
+	uint32	guest_max_time_in_park;
+	bool	peep_allow_sidestepping;
+	bool	guest_messy_queuing;
+	bool	peep_messy_walking;
+	bool	peep_messy_congestion;
+} peeps_ex_configuration;
+
+#endif
+
+
+#endif
+
 typedef struct network_configuration {
 	utf8string player_name;
 	uint32 default_port;
@@ -331,6 +346,10 @@ extern title_sequences_configuration gConfigTitleSequences;
 #ifdef STOUT_PEEPWATCH_EXPERIMENT
 extern peepwatch_configuration gConfigPeepwatch;
 #endif
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+extern peeps_ex_configuration gConfigPeepsEx;
+#endif
+
 
 extern uint16 gShortcutKeys[SHORTCUT_COUNT];
 

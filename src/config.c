@@ -249,6 +249,22 @@ config_property_definition _peepwatchDefinitions[] = {
 
 #endif
 
+
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+
+config_property_definition _peepsExDefinitions[] = {
+	{ offsetof(peeps_ex_configuration, guest_max_time_in_park),			"guest_max_time_in_park",		CONFIG_VALUE_TYPE_UINT32,		0x10000,						NULL },
+	{ offsetof(peeps_ex_configuration, peep_allow_sidestepping),		"peep_allow_sidestepping",		CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL },
+	{ offsetof(peeps_ex_configuration, guest_messy_queuing),			"guest_messy_queuing",			CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL },
+	{ offsetof(peeps_ex_configuration, peep_messy_walking),				"peep_messy_walking",			CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL },
+	{ offsetof(peeps_ex_configuration, peep_messy_congestion),			"peep_messy_congestion",		CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL }
+};
+
+#endif
+
+
+#endif
+
 config_property_definition _networkDefinitions[] = {
 	{ offsetof(network_configuration, player_name),						"player_name",					CONFIG_VALUE_TYPE_STRING,		{.value_string = "Player" },	NULL					},
 	{ offsetof(network_configuration, default_port),					"default_port",					CONFIG_VALUE_TYPE_UINT32,		NETWORK_DEFAULT_PORT,			NULL					},
@@ -309,6 +325,9 @@ config_section_definition _sectionDefinitions[] = {
 #ifdef STOUT_PEEPWATCH_EXPERIMENT
 	{ &gConfigPeepwatch, "peepwatch", _peepwatchDefinitions, countof(_peepwatchDefinitions) },
 #endif
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+	{ &gConfigPeepsEx, "expanded_peeps", _peepsExDefinitions, countof(_peepsExDefinitions) },
+#endif
 	{ &gConfigNetwork, "network", _networkDefinitions, countof(_networkDefinitions) },
 	{ &gConfigNotifications, "notifications", _notificationsDefinitions, countof(_notificationsDefinitions) },
 	{ &gConfigFonts, "fonts", _fontsDefinitions, countof(_fontsDefinitions) }
@@ -327,6 +346,12 @@ network_configuration gConfigNetwork;
 notification_configuration gConfigNotifications;
 font_configuration gConfigFonts;
 title_sequences_configuration gConfigTitleSequences;
+
+#ifdef STOUT_PEEPS_EXPANDED_EXPERIMENT
+
+peeps_ex_configuration gConfigPeepsEx;
+
+#endif
 
 static bool config_open(const utf8string path);
 static bool config_save(const utf8string path);
