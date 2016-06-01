@@ -4179,6 +4179,73 @@ STR_5867    :{WINDOW_COLOUR_2}Provider Name: {BLACK}{STRING}
 STR_5868    :{WINDOW_COLOUR_2}Provider E-mail: {BLACK}{STRING}
 STR_5869    :{WINDOW_COLOUR_2}Provider Website: {BLACK}{STRING}
 STR_5870    :{SMALLFONT}{BLACK}Show server information
+STR_5871	:
+STR_5872	:
+STR_5873	:
+STR_5874	:
+STR_5875	:
+STR_5876	:
+STR_5877	:
+STR_5878	:
+STR_5879	:
+STR_5880	:
+STR_5881	:
+STR_5882	:
+STR_5883	:
+STR_5884	:
+STR_5885	:
+STR_5886	:
+STR_5887	:
+STR_5888	:
+STR_5889	:
+STR_5890	:
+STR_5891	:
+STR_5892	:
+STR_5893	:
+STR_5894	:
+STR_5895	:
+STR_5896	:
+STR_5897	:
+STR_5898	:
+STR_5899	:
+
+#peepwatch
+STR_5900    :Enable Peepwatch
+STR_5901    :Now Peepwatching -- Park Mainenance is OFF
+STR_5902    :Now Peepwatching -- Park Mainenance is ON
+STR_5903    :Watching {STRINGID}
+STR_5904    : (eating {STRINGID})
+STR_5905    : (drinking {STRINGID})
+STR_5906    :Nobody is here...
+STR_5907    :No longer Peepwatching
+STR_5908    :{COMMA16}% Happy
+STR_5909    :{COMMA16}% Energy
+STR_5910    :{COMMA16}% Hunger
+STR_5911    :{COMMA16}% Thirst
+STR_5912    :{COMMA16}% Nausea
+STR_5913    :{COMMA16}% Bathroom
+STR_5914    :Items:
+STR_5915    :Guests:
+STR_5916    :★
+STR_5917    :☆
+STR_5918    :Peeps ahead in queue: {COMMA16}
+STR_5919    :Distance: {LENGTH}
+STR_5920    :({COMMA16})
+STR_5921    :({LENGTH})
+STR_5922    :{STRINGID}
+STR_5923    :{CURRENCY2DP} (spent: {CURRENCY2DP})
+STR_5924    :Rides: {COMMA16}× ({CURRENCY2DP})
+STR_5925    :Food: {COMMA16}× ({CURRENCY2DP})
+STR_5926    :Drinks: {COMMA16}× ({CURRENCY2DP})
+STR_5927    :Souvenirs: {COMMA16}× ({CURRENCY2DP})
+STR_5928    :{COMMA16} minutes in park
+STR_5929    :Nothing Yet
+STR_5930    :Rides: {COMMA16}×
+STR_5931    :Food: {COMMA16}×
+STR_5932    :Drinks: {COMMA16}×
+STR_5933    :Souvenirs: {COMMA16}×
+STR_5934    :Entrance: {CURRENCY2DP}
+STR_5935    :{STRINGID}
 
 #############
 # Scenarios #
