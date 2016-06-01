@@ -54,6 +54,12 @@
 #include "mode/peepwatch.h"
 #endif
 
+#ifdef STOUT_EXPANDED_RENDERING_LIGHT
+
+#include "drawing/lightfx.h"
+
+#endif
+
 // rct2: 0x0097F67C
 const char * const RCT2FilePaths[PATH_ID_END] = {
 	"Data\\g1.dat",
@@ -186,6 +192,13 @@ int rct2_init()
 	window_new_ride_init_vars();
 	window_guest_list_init_vars_b();
 	window_staff_list_init_vars();
+
+
+#ifdef STOUT_EXPANDED_RENDERING_LIGHT
+
+	lightfx_init();
+
+#endif
 
 	if (!gOpenRCT2Headless) {
 		title_load();
