@@ -70,4 +70,6 @@
 	#define FASTCALL
 #endif // PLATFORM_X86
 
+#define STOUT_PATHFINDING_EXPERIMENT
+
 #endif
