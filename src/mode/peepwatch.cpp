@@ -514,7 +514,7 @@ namespace Peepwatch
 
 				float distance = sqrt(offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2]);
 
-				float relevance = max(0.0f, 500.0f - distance) / 500.0f;
+				float relevance = Math::Max(0.0f, 500.0f - distance) / 500.0f;
 
 				firstPeep.ExcitementContinuous	+= relevance * relevance * 5.0f;
 				peep.ExcitementContinuous		+= relevance * relevance * 5.0f;
