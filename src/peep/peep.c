@@ -65,7 +65,6 @@ enum {
 static void sub_68F41A(rct_peep *peep, int index);
 static void peep_update(rct_peep *peep);
 static int peep_has_empty_container(rct_peep* peep);
-static int peep_has_drink(rct_peep* peep);
 static int peep_has_foodstuff_standard_flag(rct_peep* peep);
 static int peep_has_foodstuff_extra_flag(rct_peep* peep);
 static int peep_has_consumable_standard_flag(rct_peep* peep);
