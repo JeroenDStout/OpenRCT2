@@ -159,7 +159,7 @@ namespace Peepwatch
 		float		ExcitementGoodwill;
 
 		void Reset() {
-			ZeroMemory(this, sizeof(WatchedPeep));
+			memset(this, 0, sizeof(WatchedPeep));
 		}
 	};
 
