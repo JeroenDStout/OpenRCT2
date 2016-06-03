@@ -6630,7 +6630,7 @@ bool peep_has_item(rct_peep *peep, int peepItem)
 	}
 }
 
-static int peep_has_foodstuff_standard_flag(rct_peep* peep) {
+int peep_has_foodstuff_standard_flag(rct_peep* peep) {
 	return peep->item_standard_flags &(
 		PEEP_ITEM_BURGER |
 		PEEP_ITEM_FRIES |
@@ -6645,7 +6645,7 @@ static int peep_has_foodstuff_standard_flag(rct_peep* peep) {
 		PEEP_ITEM_CHICKEN);
 }
 
-static int peep_has_foodstuff_extra_flag(rct_peep* peep) {
+int peep_has_foodstuff_extra_flag(rct_peep* peep) {
 	return peep->item_extra_flags &(
 		PEEP_ITEM_PRETZEL |
 		PEEP_ITEM_FUNNEL_CAKE |
@@ -6660,14 +6660,14 @@ static int peep_has_foodstuff_extra_flag(rct_peep* peep) {
 		);
 }
 
-static int peep_has_drink_standard_flag(rct_peep* peep) {
+int peep_has_drink_standard_flag(rct_peep* peep) {
 	return peep->item_standard_flags &(
 		PEEP_ITEM_DRINK |
 		PEEP_ITEM_COFFEE |
 		PEEP_ITEM_LEMONADE);
 }
 
-static int peep_has_drink_extra_flag(rct_peep* peep) {
+int peep_has_drink_extra_flag(rct_peep* peep) {
 	return peep->item_extra_flags &(
 		PEEP_ITEM_CHOCOLATE |
 		PEEP_ITEM_ICED_TEA |
@@ -6677,7 +6677,7 @@ static int peep_has_drink_extra_flag(rct_peep* peep) {
 		);
 }
 
-static int peep_has_consumable_standard_flag(rct_peep* peep){
+int peep_has_consumable_standard_flag(rct_peep* peep){
 	return peep->item_standard_flags &(
 		PEEP_ITEM_DRINK |
 		PEEP_ITEM_BURGER |
@@ -6695,7 +6695,7 @@ static int peep_has_consumable_standard_flag(rct_peep* peep){
 		PEEP_ITEM_LEMONADE);
 }
 
-static int peep_has_consumable_extra_flag(rct_peep* peep){
+int peep_has_consumable_extra_flag(rct_peep* peep){
 	return peep->item_extra_flags &(
 		PEEP_ITEM_PRETZEL |
 		PEEP_ITEM_CHOCOLATE |
