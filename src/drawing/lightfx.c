@@ -172,19 +172,7 @@ void lightfx_prepare_light_list()
 		entry->z = depth;
 
 		sint32 posOnScreenX = entry->x - _current_view_x_front;
-		sint32 posOnScreenY = entry->y - _current_view_y_front;
-
-		posOnScreenX >>= _current_view_zoom_front;
-		posOnScreenY >>= _current_view_zoom_front;
-
-		if ((posOnScreenX < -128) ||
-			(posOnScreenY < -128) ||
-			(posOnScreenX > _pixelInfo.width + 128) ||
-			(posOnScreenY > _pixelInfo.height + 128)) {
-			entry->lightType = LIGHTFX_LIGHT_TYPE_NONE;
-			continue;
-		}
-			
+		sint32 posOnScreenY = entry->y - _current_view_y_front;			
 
 	//	entry->x >>= _current_view_zoom_front;
 	//	entry->y >>= _current_view_zoom_front;
