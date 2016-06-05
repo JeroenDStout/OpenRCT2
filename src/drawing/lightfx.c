@@ -430,6 +430,7 @@ void lightfx_render_lights_to_frontbuffer()
 	for (uint32 light = 0; light < LightListCurrentCountFront; light++) {
 		const uint8	*bufReadBase	= 0;
 		uint8		*bufWriteBase	= _light_rendered_buffer_front;
+		uint8		*bufCheckBase	= _light_rendered_buffer_back;
 		uint32		bufReadWidth, bufReadHeight;
 		sint32		bufWriteX, bufWriteY;
 		sint32		bufWriteWidth, bufWriteHeight;
@@ -495,6 +496,8 @@ void lightfx_render_lights_to_frontbuffer()
 		bufWriteX	= inRectCentreX - bufReadWidth / 2;
 		bufWriteY	= inRectCentreY - bufReadHeight / 2;
 
+		sint32		magicOffset = -(sint32)(bufReadHeight / 2);
+
 		bufWriteWidth	= bufReadWidth;
 		bufWriteHeight	= bufReadHeight;
 
@@ -504,6 +507,7 @@ void lightfx_render_lights_to_frontbuffer()
 		}
 		else {
 			bufWriteBase	+= bufWriteX;
+			bufCheckBase	+= bufWriteX;
 		}
 
 		if (bufWriteWidth <= 0)
@@ -515,8 +519,8 @@ void lightfx_render_lights_to_frontbuffer()
 		}
 		else {
 			bufWriteBase	+= bufWriteY * _pixelInfo.width;
+			bufCheckBase	+= bufWriteY * _pixelInfo.width;
 		}
-
 
 		if (bufWriteHeight <= 0)
 			continue;
@@ -541,16 +545,49 @@ void lightfx_render_lights_to_frontbuffer()
 		bufReadSkip		= bufReadWidth - bufWriteWidth;
 		bufWriteSkip	= _pixelInfo.width - bufWriteWidth;
 
-		if (entry->lightIntensity == 0xFF) {
+		if (entry->z == 0x7FFF) {
+			if (entry->lightIntensity == 0xFF) {
+				for (int y = 0; y < bufWriteHeight; y++) {
+					for (int x = 0; x < bufWriteWidth; x++) {
+						*bufWriteBase = min(0xFF, *bufWriteBase + *bufReadBase);
+						bufWriteBase++;
+						bufReadBase++;
+					}
+					bufWriteBase += bufWriteSkip;
+					bufReadBase += bufReadSkip;
+				}
+			}
+			else {
+				for (int y = 0; y < bufWriteHeight; y++) {
+					for (int x = 0; x < bufWriteWidth; x++) {
+						*bufWriteBase = min(0xFF, *bufWriteBase + (((*bufReadBase) * (1 + entry->lightIntensity)) >> 8));
+						bufWriteBase++;
+						bufReadBase++;
+					}
+					bufWriteBase += bufWriteSkip;
+					bufReadBase += bufReadSkip;
+				}
+			}
+		}
+		else if (entry->lightIntensity == 0xFF) {
 			for (int y = 0; y < bufWriteHeight; y++) {
 				for (int x = 0; x < bufWriteWidth; x++) {
-					*bufWriteBase = min(0xFF, *bufWriteBase + *bufReadBase);
+					int diff = (uint8)(*bufCheckBase - (uint8)(entry->z));
+					if (diff < 50) {
+						*bufWriteBase = min(0xFF, *bufWriteBase + ((*bufReadBase) * (50 - diff)) / 50);
+					}
+					else if (diff > 250) {
+						*bufWriteBase = min(0xFF, *bufWriteBase + ((*bufReadBase) * (diff - 250)) / 5);
+					}
 					bufWriteBase++;
+					bufCheckBase++;
 					bufReadBase++;
 				}
 
 				bufWriteBase	+= bufWriteSkip;
+				bufCheckBase	+= bufWriteSkip;
 				bufReadBase		+= bufReadSkip;
+				magicOffset		+= 1;
 			}
 		}
 		else {
@@ -571,6 +608,11 @@ void lightfx_render_lights_to_frontbuffer()
 void* lightfx_get_front_buffer()
 {
 	return _light_rendered_buffer_front;
+}
+
+void* lightfx_get_back_buffer()
+{
+	return _light_rendered_buffer_back;
 }
 
 void lightfx_add_3d_light(uint32 lightID, uint16 lightIDqualifier, sint16 x, sint16 y, uint16 z, uint8 lightType)
