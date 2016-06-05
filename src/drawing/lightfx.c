@@ -31,6 +31,7 @@ static uint8 _bakedLightTexture_spot_3[256 * 256];
 static rct_drawpixelinfo	_pixelInfo;
 
 static void* _light_rendered_buffer_back = 0;
+static void* _light_rendered_buffer_depth = 0;
 static void* _light_rendered_buffer_front = 0;
 
 static uint32	_lightPolution_back = 0;
