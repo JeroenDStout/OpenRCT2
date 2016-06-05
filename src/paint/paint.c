@@ -947,6 +947,37 @@ void paint_quadrant_ps() {
 			}
 		}
 
+		gCurDrawSpriteDepthValue = (ps->bound_box_x + ps->bound_box_x_end + ps->bound_box_y + ps->bound_box_y_end) / 16; //((ps->bound_box_x + ps->bound_box_x_end + ps->bound_box_y + ps->bound_box_y_end) / 16);// & 0xFF;
+
+		rct_xyz16 extent;
+		extent.x = ps->bound_box_x_end;
+		extent.y = ps->bound_box_y_end;
+		extent.z = ps->bound_box_z_end;// ps->mapElement->base_height + ps->mapElement->clearance_height;//(ps->mapElement)? ps->mapElement->base_height + ps->mapElement->clearance_height : 0;
+
+		rct_xy16 map = coordinate_3d_to_2d(&extent, get_current_rotation());
+
+		uint32 image_element = ps->image_id & 0x7FFFF;
+		rct_g1_element *g1Element = gfx_get_g1_element(image_element);
+		map.x -= g1Element->x_offset;
+		map.y -= g1Element->y_offset;
+
+		gBackPushBufferOffsetX = x - map.x;
+		gBackPushBufferOffsetY = y - map.y;
+
+		if (ps->sprite_type == 1) {
+		//	if (gBackPushBufferOffsetY < -40) {
+		//		gBackPushBufferOffsetY -= 32;
+		//	}
+		}
+
+	//	gBackPushBufferOffsetX -= 26;
+	//	gBackPushBufferOffsetY -= 64;
+
+	//	if (gBackPushBufferOffsetX > 0)
+	//		gBackPushBufferOffsetX -= 1;
+
+		gBackPushBufferRead	= gBackPushBuffer;
+
 		if (ps->flags & PAINT_STRUCT_FLAG_IS_MASKED)
 			gfx_draw_sprite_raw_masked(dpi, x, y, image_id, ps->colour_image_id);
 		else
