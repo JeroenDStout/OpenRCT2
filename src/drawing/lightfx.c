@@ -163,10 +163,13 @@ void lightfx_prepare_light_list()
 			.z = entry->z
 		};
 
+		uint8	depth = (entry->x + entry->y) / 8;
+
 		rct_xy16 coord_2d = coordinate_3d_to_2d(&coord_3d, _current_view_rotation_front);
 
 		entry->x = coord_2d.x;// - (_current_view_x_front);
 		entry->y = coord_2d.y;// - (_current_view_y_front);
+		entry->z = depth;
 
 		sint32 posOnScreenX = entry->x - _current_view_x_front;
 		sint32 posOnScreenY = entry->y - _current_view_y_front;
