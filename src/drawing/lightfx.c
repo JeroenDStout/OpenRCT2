@@ -222,150 +222,152 @@ void lightfx_prepare_light_list()
 			break;
 		}
 
-		if (true) {
-			int totalSamplePoints = 5;
-			int startSamplePoint = 1;
-			int lastSampleCount = 0;
+		//if (true) {
+		//	int totalSamplePoints = 5;
+		//	int startSamplePoint = 1;
+		//	int lastSampleCount = 0;
 
-			if ((entry->lightIDqualifier & 0xF) == LIGHTFX_LIGHT_QUALIFIER_MAP) {
-				startSamplePoint = 0;
-				totalSamplePoints = 1;
-			}
+		//	if ((entry->lightIDqualifier & 0xF) == LIGHTFX_LIGHT_QUALIFIER_MAP) {
+		//		startSamplePoint = 0;
+		//		totalSamplePoints = 1;
+		//	}
 
-			for (int pat = startSamplePoint; pat < totalSamplePoints; pat++) {
-				rct_xy16 mapCoord = { 0 };
+		//	for (int pat = startSamplePoint; pat < totalSamplePoints; pat++) {
+		//		break;
 
-				rct_map_element *mapElement = 0;
+		//		rct_xy16 mapCoord = { 0 };
 
-				int interactionType;
+		//		rct_map_element *mapElement = 0;
 
-				rct_window *w = window_get_main();
-				if (w != NULL) {
-				//	get_map_coordinates_from_pos(entry->x + offsetPattern[pat*2] / mapFrontDiv, entry->y + offsetPattern[pat*2+1] / mapFrontDiv, VIEWPORT_INTERACTION_MASK_NONE, &mapCoord.x, &mapCoord.y, &interactionType, &mapElement, NULL);
+		//		int interactionType;
 
-					RCT2_GLOBAL(0x9AC154, uint16_t) = ~VIEWPORT_INTERACTION_MASK_SPRITE & 0xFFFF;
-					RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t) = _current_view_zoom_front;
-					RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t) = entry->x + offsetPattern[0 + pat * 2] / mapFrontDiv;
-					RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t) = entry->y + offsetPattern[1 + pat * 2] / mapFrontDiv;
-					rct_drawpixelinfo* dpi = RCT2_ADDRESS(RCT2_ADDRESS_VIEWPORT_DPI, rct_drawpixelinfo);
-					dpi->x = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t);
-					dpi->y = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t);
-					dpi->zoom_level = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t);
-					dpi->height = 1;
-					dpi->width = 1;
-					RCT2_GLOBAL(0xEE7880, uint32_t) = 0xF1A4CC;
-					RCT2_GLOBAL(0x140E9A8, rct_drawpixelinfo*) = dpi;
-					painter_setup();
-					viewport_paint_setup();
-					sub_688217();
-					sub_68862C();
+		//		rct_window *w = window_get_main();
+		//		if (w != NULL) {
+		//		//	get_map_coordinates_from_pos(entry->x + offsetPattern[pat*2] / mapFrontDiv, entry->y + offsetPattern[pat*2+1] / mapFrontDiv, VIEWPORT_INTERACTION_MASK_NONE, &mapCoord.x, &mapCoord.y, &interactionType, &mapElement, NULL);
 
-				//	log_warning("[%i, %i]", dpi->x, dpi->y);
+		//			RCT2_GLOBAL(0x9AC154, uint16_t) = ~VIEWPORT_INTERACTION_MASK_SPRITE & 0xFFFF;
+		//			RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t) = _current_view_zoom_front;
+		//			RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t) = entry->x + offsetPattern[0 + pat * 2] / mapFrontDiv;
+		//			RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t) = entry->y + offsetPattern[1 + pat * 2] / mapFrontDiv;
+		//			rct_drawpixelinfo* dpi = RCT2_ADDRESS(RCT2_ADDRESS_VIEWPORT_DPI, rct_drawpixelinfo);
+		//			dpi->x = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t);
+		//			dpi->y = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t);
+		//			dpi->zoom_level = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t);
+		//			dpi->height = 1;
+		//			dpi->width = 1;
+		//			RCT2_GLOBAL(0xEE7880, uint32_t) = 0xF1A4CC;
+		//			RCT2_GLOBAL(0x140E9A8, rct_drawpixelinfo*) = dpi;
+		//			painter_setup();
+		//			viewport_paint_setup();
+		//			sub_688217();
+		//			sub_68862C();
 
-					mapCoord.x = RCT2_GLOBAL(0x9AC14C, int16_t) + tileOffsetX;
-					mapCoord.y = RCT2_GLOBAL(0x9AC14E, int16_t) + tileOffsetY;
-					interactionType = RCT2_GLOBAL(0x9AC148, uint8_t);
-					mapElement = RCT2_GLOBAL(0x9AC150, rct_map_element*);
+		//		//	log_warning("[%i, %i]", dpi->x, dpi->y);
 
-					//RCT2_GLOBAL(0x9AC154, uint16_t) = VIEWPORT_INTERACTION_MASK_NONE;
-					//RCT2_GLOBAL(0x9AC148, uint8_t) = 0;
-					//RCT2_GLOBAL(0x9AC138 + 4, int16_t) = screenX;
-					//RCT2_GLOBAL(0x9AC138 + 6, int16_t) = screenY;
-					//if (screenX >= 0 && screenX < (int)myviewport->width && screenY >= 0 && screenY < (int)myviewport->height)
-					//{
-					//	screenX <<= myviewport->zoom;
-					//	screenY <<= myviewport->zoom;
-					//	screenX += (int)myviewport->view_x;
-					//	screenY += (int)myviewport->view_y;
-					//	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t) = myviewport->zoom;
-					//	screenX &= (0xFFFF << myviewport->zoom) & 0xFFFF;
-					//	screenY &= (0xFFFF << myviewport->zoom) & 0xFFFF;
-					//	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t) = screenX;
-					//	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t) = screenY;
-					//	rct_drawpixelinfo* dpi = RCT2_ADDRESS(RCT2_ADDRESS_VIEWPORT_DPI, rct_drawpixelinfo);
-					//	dpi->y = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t);
-					//	dpi->height = 1;
-					//	dpi->zoom_level = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t);
-					//	dpi->x = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t);
-					//	dpi->width = 1;
-					//	RCT2_GLOBAL(0xEE7880, uint32_t) = 0xF1A4CC;
-					//	RCT2_GLOBAL(0x140E9A8, rct_drawpixelinfo*) = dpi;
-					//	painter_setup();
-					//	viewport_paint_setup();
-					//	sub_688217();
-					//	sub_68862C();
-					//}
-				}	
+		//			mapCoord.x = RCT2_GLOBAL(0x9AC14C, int16_t) + tileOffsetX;
+		//			mapCoord.y = RCT2_GLOBAL(0x9AC14E, int16_t) + tileOffsetY;
+		//			interactionType = RCT2_GLOBAL(0x9AC148, uint8_t);
+		//			mapElement = RCT2_GLOBAL(0x9AC150, rct_map_element*);
 
-				sint32 minDist = 0;
-				sint32 baseHeight = -999;
+		//			//RCT2_GLOBAL(0x9AC154, uint16_t) = VIEWPORT_INTERACTION_MASK_NONE;
+		//			//RCT2_GLOBAL(0x9AC148, uint8_t) = 0;
+		//			//RCT2_GLOBAL(0x9AC138 + 4, int16_t) = screenX;
+		//			//RCT2_GLOBAL(0x9AC138 + 6, int16_t) = screenY;
+		//			//if (screenX >= 0 && screenX < (int)myviewport->width && screenY >= 0 && screenY < (int)myviewport->height)
+		//			//{
+		//			//	screenX <<= myviewport->zoom;
+		//			//	screenY <<= myviewport->zoom;
+		//			//	screenX += (int)myviewport->view_x;
+		//			//	screenY += (int)myviewport->view_y;
+		//			//	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t) = myviewport->zoom;
+		//			//	screenX &= (0xFFFF << myviewport->zoom) & 0xFFFF;
+		//			//	screenY &= (0xFFFF << myviewport->zoom) & 0xFFFF;
+		//			//	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t) = screenX;
+		//			//	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t) = screenY;
+		//			//	rct_drawpixelinfo* dpi = RCT2_ADDRESS(RCT2_ADDRESS_VIEWPORT_DPI, rct_drawpixelinfo);
+		//			//	dpi->y = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t);
+		//			//	dpi->height = 1;
+		//			//	dpi->zoom_level = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t);
+		//			//	dpi->x = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t);
+		//			//	dpi->width = 1;
+		//			//	RCT2_GLOBAL(0xEE7880, uint32_t) = 0xF1A4CC;
+		//			//	RCT2_GLOBAL(0x140E9A8, rct_drawpixelinfo*) = dpi;
+		//			//	painter_setup();
+		//			//	viewport_paint_setup();
+		//			//	sub_688217();
+		//			//	sub_68862C();
+		//			//}
+		//		}	
 
-				if (interactionType != VIEWPORT_INTERACTION_ITEM_SPRITE && mapElement) {
-					baseHeight = mapElement->base_height;
-				}
+		//		sint32 minDist = 0;
+		//		sint32 baseHeight = -999;
 
-				minDist = ((baseHeight * 8) - coord_3d.z) / 2;
+		//		if (interactionType != VIEWPORT_INTERACTION_ITEM_SPRITE && mapElement) {
+		//			baseHeight = mapElement->base_height;
+		//		}
 
-				sint32 deltaX = mapCoord.x - coord_3d.x;
-				sint32 deltaY = mapCoord.y - coord_3d.y;
+		//		minDist = ((baseHeight * 8) - coord_3d.z) / 2;
 
-				sint32 projDot = (dirVecX * deltaX + dirVecY * deltaY) / 1000;
+		//		sint32 deltaX = mapCoord.x - coord_3d.x;
+		//		sint32 deltaY = mapCoord.y - coord_3d.y;
 
-				projDot = max(minDist, projDot);
+		//		sint32 projDot = (dirVecX * deltaX + dirVecY * deltaY) / 1000;
 
-				if (projDot < 5) {
-					lightIntensityOccluded	+= 100;
-				}
-				else {
-					lightIntensityOccluded	+= max(0, 200 - (projDot * 20));
-				}
+		//		projDot = max(minDist, projDot);
 
-			//	log_warning("light %i [%i, %i, %i], [%i, %i] minDist to %i: %i; projdot: %i", light, coord_3d.x, coord_3d.y, coord_3d.z, mapCoord.x, mapCoord.y, baseHeight, minDist, projDot);
+		//		if (projDot < 5) {
+		//			lightIntensityOccluded	+= 100;
+		//		}
+		//		else {
+		//			lightIntensityOccluded	+= max(0, 200 - (projDot * 20));
+		//		}
+
+		//	//	log_warning("light %i [%i, %i, %i], [%i, %i] minDist to %i: %i; projdot: %i", light, coord_3d.x, coord_3d.y, coord_3d.z, mapCoord.x, mapCoord.y, baseHeight, minDist, projDot);
 
 
-				if (pat == 0) {
-					if (lightIntensityOccluded == 100)
-						break;
-					if (_current_view_zoom_front > 2)
-						break;
-					totalSamplePoints += 4;
-				}
-				else if (pat == 4) {
-					if (_current_view_zoom_front > 1)
-						break;
-					if (lightIntensityOccluded == 0 || lightIntensityOccluded == 500)
-						break;
-					lastSampleCount = lightIntensityOccluded / 500;
-				//	break;
-					totalSamplePoints += 4;
-				}
-				else if (pat == 8) {
-					break;
-					if (_current_view_zoom_front > 0)
-						break;
-					int newSampleCount = lightIntensityOccluded / 900;
-					if (abs(newSampleCount - lastSampleCount) < 10)
-						break;
-					totalSamplePoints += 4;
-				}
-			}
+		//		if (pat == 0) {
+		//			if (lightIntensityOccluded == 100)
+		//				break;
+		//			if (_current_view_zoom_front > 2)
+		//				break;
+		//			totalSamplePoints += 4;
+		//		}
+		//		else if (pat == 4) {
+		//			if (_current_view_zoom_front > 1)
+		//				break;
+		//			if (lightIntensityOccluded == 0 || lightIntensityOccluded == 500)
+		//				break;
+		//			lastSampleCount = lightIntensityOccluded / 500;
+		//		//	break;
+		//			totalSamplePoints += 4;
+		//		}
+		//		else if (pat == 8) {
+		//			break;
+		//			if (_current_view_zoom_front > 0)
+		//				break;
+		//			int newSampleCount = lightIntensityOccluded / 900;
+		//			if (abs(newSampleCount - lastSampleCount) < 10)
+		//				break;
+		//			totalSamplePoints += 4;
+		//		}
+		//	}
 
-			totalSamplePoints -= startSamplePoint;
+		//	totalSamplePoints -= startSamplePoint;
 
 		//	lightIntensityOccluded = totalSamplePoints * 100;
-		
-		//	log_warning("sample-count: %i, occlusion: %i", totalSamplePoints, lightIntensityOccluded);
+		//
+		////	log_warning("sample-count: %i, occlusion: %i", totalSamplePoints, lightIntensityOccluded);
 
-			if (lightIntensityOccluded == 0) {
-				entry->lightType = LIGHTFX_LIGHT_TYPE_NONE;
-				continue;
-			}
+		//	if (lightIntensityOccluded == 0) {
+		//		entry->lightType = LIGHTFX_LIGHT_TYPE_NONE;
+		//		continue;
+		//	}
 			
 		//	log_warning("sample-count: %i, occlusion: %i", totalSamplePoints, lightIntensityOccluded / totalSamplePoints);
 
-			entry->lightIntensity = min(0xFF, (entry->lightIntensity * lightIntensityOccluded) / (totalSamplePoints * 100));
+		//	entry->lightIntensity = min(0xFF, (entry->lightIntensity * lightIntensityOccluded) / (totalSamplePoints * 100));
 			entry->lightIntensity = max(0x00, entry->lightIntensity - _current_view_zoom_front * 5);
-		}
+		//}
 
 		if (_current_view_zoom_front > 0) {
 			if ((entry->lightType & 0x3) < _current_view_zoom_front) {
