@@ -547,7 +547,7 @@ void platform_update_palette(const uint8* colours, int start_index, int num_colo
 		gPalette[i].b = colours[0];
 		gPalette[i].a = 0;
 
-		float night = (float)(pow(gDayNightCycle, 1.5));
+		float night = 1.0f;//(float)(pow(gDayNightCycle, 1.5));
 
 #ifdef STOUT_EXPANDED_RENDERING_LIGHT
 
