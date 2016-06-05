@@ -17,7 +17,11 @@
 extern "C"
 {
     #include "drawing.h"
+	#include "../paint/paint.h"
+	#include "../addresses.h"
+	#include "lightfx.h"
 }
+#include "../core/Math.hpp"
 
 // This will have -1 (0xffffffff) for (val <= 0), 0 otherwise, so it can act as a mask
 // This is expected to generate
@@ -37,12 +41,20 @@ static void FASTCALL DrawRLESprite2(const uint8* RESTRICT source_bits_pointer,
     int zoom_amount = 1 << zoom_level;
     int zoom_mask = 0xFFFFFFFF << zoom_level;
     uint8* next_dest_pointer = dest_bits_pointer;
+	uint8* next_dest_pointer_depth = (uint8*)lightfx_get_back_buffer();
+
+	sint32 offset = dest_bits_pointer - gScreenDPI.bits;
+
+	if (offset >= 0 && offset < gScreenDPI.width * gScreenDPI.height) {
+		next_dest_pointer_depth		+= offset;
+	}
 
     int line_width = (dpi->width >> zoom_level) + dpi->pitch;
 
     const int source_y_start_mask = less_or_equal_zero_mask(source_y_start + 1);
     source_y_start += zoom_amount & source_y_start_mask;
     next_dest_pointer += line_width & source_y_start_mask;
+	next_dest_pointer_depth += line_width & source_y_start_mask;
     height -= zoom_amount & source_y_start_mask;
 
     //For every line in the image
@@ -54,6 +66,7 @@ static void FASTCALL DrawRLESprite2(const uint8* RESTRICT source_bits_pointer,
         //This will move the pointer to the correct source line.
         const uint8 *next_source_pointer = source_bits_pointer + ((uint16*)source_bits_pointer)[y];
         uint8* loop_dest_pointer = next_dest_pointer + line_width * i2;
+		uint8* loop_dest_pointer_depth = next_dest_pointer_depth + line_width * i2;
 
         uint8 last_data_line = 0;
 
@@ -61,6 +74,7 @@ static void FASTCALL DrawRLESprite2(const uint8* RESTRICT source_bits_pointer,
         while (!last_data_line) {
             const uint8* source_pointer = next_source_pointer;
             uint8* dest_pointer = loop_dest_pointer;
+			uint8* dest_pointer_depth = loop_dest_pointer_depth;
 
             int no_pixels = *source_pointer++;
             //gap_size is the number of non drawn pixels you require to
@@ -82,10 +96,13 @@ static void FASTCALL DrawRLESprite2(const uint8* RESTRICT source_bits_pointer,
             x_start += ~zoom_mask & x_mask;
             source_pointer += (x_start&~zoom_mask) & x_mask;
 
+
             // This will have -1 (0xffffffff) for (x_start <= 0), 0 otherwise
             int sign = less_or_equal_zero_mask(x_start);
 
             dest_pointer += (x_start >> zoom_level) & ~sign;
+			dest_pointer_depth += (x_start >> zoom_level) & ~sign;
+			gBackPushBufferRead = gBackPushBuffer + 128 + gBackPushBufferOffsetX + source_x_start  + (x_start & ~sign) + Math::Min(127, i + source_y_start + gBackPushBufferOffsetY + 64) * 256;
 
             //If the start is negative we require to remove part of the image.
             //This is done by moving the image pointer to the correct position.
@@ -94,6 +111,8 @@ static void FASTCALL DrawRLESprite2(const uint8* RESTRICT source_bits_pointer,
             no_pixels += x_start & sign;
             //Reset the start position to zero as we have taken into account all moves
             x_start &= ~sign;
+
+			gBackPushBufferRead -= x_start & sign;
 
             int x_end = x_start + no_pixels;
             //If the end position is further out than the whole image
@@ -105,32 +124,39 @@ static void FASTCALL DrawRLESprite2(const uint8* RESTRICT source_bits_pointer,
             //Finally after all those checks, copy the image onto the drawing surface
             //If the image type is not a basic one we require to mix the pixels
             if (image_type & IMAGE_TYPE_USE_PALETTE) {//In the .exe these are all unraveled loops
-                for (; no_pixels > 0; no_pixels -= zoom_amount, source_pointer += zoom_amount, dest_pointer++) {
+                for (; no_pixels > 0; no_pixels -= zoom_amount, source_pointer += zoom_amount, dest_pointer++, dest_pointer_depth++) {
                     uint8 al = *source_pointer;
                     uint8 ah = *dest_pointer;
                     if (image_type & IMAGE_TYPE_MIX_BACKGROUND)
                         al = palette_pointer[(((uint16)al << 8) | ah) - 0x100];
-                    else
+                    else {
                         al = palette_pointer[al];
-                    *dest_pointer = al;
+						*dest_pointer_depth = gCurDrawSpriteDepthValue + *gBackPushBufferRead;
+					}
+					*dest_pointer = al;
+					gBackPushBufferRead++;
                 }
             } else if (image_type & IMAGE_TYPE_MIX_BACKGROUND) {//In the .exe these are all unraveled loops
                 //Doesn't use source pointer ??? mix with background only?
                 //Not Tested
 
-                for (; no_pixels > 0; no_pixels -= zoom_amount, dest_pointer++) {
+                for (; no_pixels > 0; no_pixels -= zoom_amount, dest_pointer++, dest_pointer_depth++) {
                     uint8 pixel = *dest_pointer;
                     pixel = palette_pointer[pixel];
-                    *dest_pointer = pixel;
+					*dest_pointer = pixel;
+					*dest_pointer_depth = gCurDrawSpriteDepthValue + *gBackPushBufferRead;
+					gBackPushBufferRead++;
                 }
             } else
             {
-                if (zoom_amount == 1) {
+                if (zoom_amount == 1 && false) {
                     no_pixels &= ~less_or_equal_zero_mask(no_pixels);
                     memcpy(dest_pointer, source_pointer, no_pixels);
                 } else {
-                    for (; no_pixels > 0; no_pixels -= zoom_amount, source_pointer += zoom_amount, dest_pointer++) {
-                        *dest_pointer = *source_pointer;
+                    for (; no_pixels > 0; no_pixels -= zoom_amount, source_pointer += zoom_amount, dest_pointer++, dest_pointer_depth++) {
+						*dest_pointer = *source_pointer;
+						*dest_pointer_depth = gCurDrawSpriteDepthValue + *gBackPushBufferRead;
+						gBackPushBufferRead++;
                     }
                 }
             }
