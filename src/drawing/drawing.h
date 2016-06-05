@@ -20,6 +20,12 @@
 #include "../common.h"
 #include "font.h"
 
+extern uint8 gCurDrawSpriteDepthValue;
+extern sint16 gBackPushBufferOffsetX;
+extern sint16 gBackPushBufferOffsetY;
+extern uint8* gBackPushBuffer;
+extern uint8* gBackPushBufferRead;
+
 #pragma pack(push, 1)
 // Size: 0x10
 typedef struct rct_drawpixelinfo {

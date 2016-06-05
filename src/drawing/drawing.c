@@ -23,6 +23,12 @@
 #include "../world/water.h"
 #include "drawing.h"
 
+uint8 gCurDrawSpriteDepthValue;
+sint16 gBackPushBufferOffsetX;
+sint16 gBackPushBufferOffsetY;
+uint8 *gBackPushBuffer = 0;
+uint8 *gBackPushBufferRead = 0;
+
 // HACK These were originally passed back through registers
 int gLastDrawStringX;
 int gLastDrawStringY;
@@ -167,7 +173,8 @@ void gfx_transpose_palette(int pal, unsigned char product)
  *
  *  rct2: 0x006837E3 
  */
-void load_palette(){
+void load_palette()
+{
 	rct_water_type* water_type = (rct_water_type*)object_entry_groups[OBJECT_TYPE_WATER].chunks[0];
 
 	uint32 palette = 0x5FC;
@@ -203,6 +210,41 @@ void gfx_invalidate_screen()
 
 uint8* gfx_get_dirty_blocks()
 {
+	if (gBackPushBuffer == 0) {
+		gBackPushBuffer = realloc(gBackPushBuffer, 256 * 128);
+
+		uint8 *parcer = gBackPushBuffer;
+
+		for (int y = 0; y < 128; y++) {
+			for (int x = 0; x < 128; x++) {
+				*parcer = (128 - x) / 8;
+				parcer++;
+			}
+			for (int x = 0; x < 128; x++) {
+				*parcer = (x) / 8;
+				parcer++;
+			}
+		}
+
+		parcer = gBackPushBuffer;
+
+		for (int y = 0; y < 64; y++) {
+			for (int x = 0; x < 256; x++) {
+				*parcer = max(*parcer, (64 - y) / 4);
+				parcer++;
+			}
+		}
+
+	//	parcer = gBackPushBuffer;
+
+	//	for (int y = 0; y < 128; y++) {
+	//		for (int x = 0; x < 256; x++) {
+	//			*parcer = ((x > 126 && x < 130) || (y > 62 && y < 66))? 0xFF : 0x8F;
+	//			parcer++;
+	//		}
+	//	}
+	}
+
 	int size = _screenDirtyBlockColumns * _screenDirtyBlockRows;
 	if (_screenDirtyBlocksSize != size) {
 		if (_screenDirtyBlocks) {
