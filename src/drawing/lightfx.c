@@ -140,6 +140,7 @@ void lightfx_update_buffers(rct_drawpixelinfo *info)
 {
 	_light_rendered_buffer_front	= realloc(_light_rendered_buffer_front,	info->width * info->height);
 	_light_rendered_buffer_back		= realloc(_light_rendered_buffer_back,	info->width * info->height);
+	_light_rendered_buffer_depth	= realloc(_light_rendered_buffer_depth, info->width * info->height);
 
 	memcpy(&_pixelInfo, info, sizeof(rct_drawpixelinfo));
 }
@@ -382,11 +383,10 @@ void lightfx_prepare_light_list()
 
 void lightfx_swap_buffers()
 {
-	void *tmp = _light_rendered_buffer_back;
-	_light_rendered_buffer_back = _light_rendered_buffer_front;
-	_light_rendered_buffer_front = tmp;
+	void *tmp;
 
-	tmp = _light_rendered_buffer_back;
+	tmp = _light_rendered_buffer_depth;
+	_light_rendered_buffer_depth = _light_rendered_buffer_back;
 	_light_rendered_buffer_back = _light_rendered_buffer_front;
 	_light_rendered_buffer_front = tmp;
 
@@ -430,7 +430,7 @@ void lightfx_render_lights_to_frontbuffer()
 	for (uint32 light = 0; light < LightListCurrentCountFront; light++) {
 		const uint8	*bufReadBase	= 0;
 		uint8		*bufWriteBase	= _light_rendered_buffer_front;
-		uint8		*bufCheckBase	= _light_rendered_buffer_back;
+		uint8		*bufCheckBase	= _light_rendered_buffer_depth;
 		uint32		bufReadWidth, bufReadHeight;
 		sint32		bufWriteX, bufWriteY;
 		sint32		bufWriteWidth, bufWriteHeight;
