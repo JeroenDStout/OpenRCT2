@@ -55,6 +55,11 @@ extern "C"
         case DRAWING_ENGINE_OPENGL:
             _drawingEngine = DrawingEngineFactory::CreateOpenGL();
             break;
+#ifdef STOUT_EXPANDED_RENDERING
+		case DRAWING_ENGINE_LIGHTFX_ON_SOFTWARE:
+			_drawingEngine = DrawingEngineFactory::CreateLightFXOnSoftware();
+			break;
+#endif
         }
 
         if (_drawingEngine == nullptr)
