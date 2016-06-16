@@ -58,7 +58,11 @@ namespace DrawingEngineFactory
 {
     IDrawingEngine * CreateSoftware();
     IDrawingEngine * CreateSoftwareWithHardwareDisplay();
+	IDrawingEngine * CreateLightFXOnSoftware();
     IDrawingEngine * CreateOpenGL();
+#ifdef STOUT_EXPANDED_RENDERING
+	IDrawingEngine * CreateLightFXOnSoftware();
+#endif
 };
 
 interface IRainDrawer

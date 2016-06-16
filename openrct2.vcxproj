@@ -52,6 +52,7 @@
     <ClCompile Include="src\diagnostic.c" />
     <ClCompile Include="src\drawing\drawing.c" />
     <ClCompile Include="src\drawing\drawing_fast.cpp" />
+    <ClCompile Include="src\drawing\engines\LightFXOnSoftwareDrawingEngine.cpp" />
     <ClCompile Include="src\drawing\engines\opengl\CopyFramebufferShader.cpp" />
     <ClCompile Include="src\drawing\engines\opengl\DrawImageMaskedShader.cpp" />
     <ClCompile Include="src\drawing\engines\opengl\DrawImageShader.cpp" />
