@@ -1,23 +1,26 @@
 # OPENRCT2
 
-sdl
+/sdl
 
 # Compiled dll
 openrct2.dll
 
-# Compiled linux executable
-openrct2
-
 # Distribution
 distribution/windows/*.exe
+distribution/android/*/external/
 
 # Build artifacts
 artifacts
 .cache
+.dependencies
 
 #lib
 lib
 libversion
+
+#sequences
+data/title
+sequencesversion
 
 #################
 ## Eclipse
@@ -234,7 +237,7 @@ xcuserdata
 .DS_Store
 
 # We link logo files to .xcassets in Xcode project, so don't sync them
-distribution/osx/Assets.xcassets/AppIcon.appiconset/*.png
+distribution/macos/Assets.xcassets/AppIcon.appiconset/*.png
 
 # Extra Xcode-specific lib files
 libxc
@@ -282,3 +285,20 @@ data/g2.dat
 
 # KDE folder settings
 .directory
+
+###############
+## JetBrains ##
+###############
+.idea/
+
+#########################
+## Visual Studio Code
+#########################
+.vscode/*
+.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Cmake
+cmake-build-debug/

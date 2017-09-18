@@ -1,5 +1,5 @@
-Last updated:    2016-04-13
-Release version: 0.0.5.0-beta
+Last updated:    2017-08-09
+Release version: 0.1.1
 ------------------------------------------------------------------------
 
 
@@ -57,20 +57,19 @@ following information in your bug report:
  * Platform (Windows, Linux, FreeBSD, ...) and compiler (including version) if
    you compiled OpenRCT2 yourself.
  * The processor architecture of your OS (32 bits Windows, 64 bits Windows,
-   Linux on an ARM, Mac OS X on a PowerPC, ...)
+   Android on an ARM, Linux on a PowerPC, ...)
  * The language and culture your operating system is using.
  * Attach a saved game *and* a screenshot if possible
  * If this bug only occurred recently please note the last version without
    the bug and the first version including the bug. That way we can fix it
    quicker by looking at the changes made.
- * Attach crash.dmp, crash.log and crash.sav. These files are usually created
-   next to your openrct2.cfg. The crash handler will tell you the location.
+ * Attach a crash dump (if your game crashed or froze).
 
 3.0) Supported platforms
 ---- -------------------
 OpenRCT2 is currently supported on Windows Vista and above, many distributions of
-Linux and OSX 10.7. OpenRCT2 will only work on x86 architectures as the
-original RollerCoaster Tycoon 2 binary is still required to run the game.
+Linux, macOS 10.9 or higher, Android, FreeBSD and OpenBSD. OpenRCT2 will only work on
+little-endian architectures.
 Further instructions can be found on GitHub.
 
 4.0) Installing and running OpenRCT2
@@ -94,7 +93,11 @@ in the following locations:
   - C:\Program Files (x86)\Infogrames Interactive\RollerCoaster Tycoon 2,
   - C:\Program Files\Atari\RollerCoaster Tycoon 2,
   - C:\Program Files (x86)\Atari\RollerCoaster Tycoon 2,
-  - C:\GOG Games\RollerCoaster Tycoon 2 Triple Thrill Pack
+  - C:\GOG Games\RollerCoaster Tycoon 2 Triple Thrill Pack,
+  - C:\Program Files\GalaxyClient\Games\RollerCoaster Tycoon 2 Triple Thrill Pack,
+  - C:\Program Files (x86)\GalaxyClient\Games\RollerCoaster Tycoon 2 Triple Thrill Pack,
+  - C:\Program Files\Steam\steamapps\common\Rollercoaster Tycoon 2,
+  - C:\Program Files (x86)\Steam\steamapps\common\Rollercoaster Tycoon 2,
   - The location of the openrct2.exe (where OpenRCT2 was extracted/installed)
 
 If none of these locations are found, OpenRCT2 will ask you to manually specify
@@ -102,15 +105,7 @@ the directory. Alternatively after running OpenRCT2 for the first time, you can
 edit openrct2.cfg in the OpenRCT2 sub directory of your documents folder to set
 the RCT2 install path.
 
-If you are running Windows and have set a DPI scale, OpenRCT2 might look blury.
-This is because OpenRCT2 currently uses the original RollerCoaster Tycoon 2
-binary as an application host. However you can manually configure this binary to
-not be scaled. This will make the game more crisp, but may result in the
-interface being too small to see clearly and less ergonomic to use. To stop DPI
-scaling, right click the binary itself (openrct2.exe) in the install directory
-or the OpenRCT2 shortcut either in your start menu or on your desktop and then
-select properties. Select the compatibility tab, check
-"Disable display scaling on high DPI settings" and then click OK.
+OpenRCT2 supports setting a DPI scale in increments of .25. To set it, open the Options menu.
 
 If you wish to use Steam Overlay or capture game for video recording or
 streaming, you might have to enable hardware display in the options window.
@@ -130,7 +125,7 @@ information about the project, its roadmap and how to compile the source code.
 6.0) Translation
 ---- -----------
 For more information about the game's translation and how to contribute, please
-visit the GitHub page and wiki at (https://github.com/OpenRCT2/OpenRCT2).
+visit the GitHub page and wiki at (https://github.com/OpenRCT2/Localisation).
 
 7.0) Troubleshooting
 ---- ---------------
@@ -149,8 +144,10 @@ to all files in this distribution, except as noted below.
 
 Jansson  | MIT licence.
 libcURL  | MIT (or Modified BSD-style) licence.
-libspeex | BSD-style license.
+libspeex | BSD-style licence.
 libpng   | libpng licence.
+libzip   | BSD 3 clause licence.
+OpenSSL  | OpenSSL Licence
 SDL2     | zlib licence.
 SDL2 TTF | zlib licence.
 zlib     | zlib licence.

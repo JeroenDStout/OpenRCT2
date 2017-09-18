@@ -1,0 +1,51 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/openrct2",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/bin",
+            "environment": [],
+            "externalConsole": true,
+            "setupCommands": [
+                {
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "linux": {
+                "MIMode": "gdb"
+            },
+            "osx": {
+                "MIMode": "lldb"
+            },
+            "windows": {
+                "MIMode": "gdb"
+            }
+        },
+        {
+            "name": "C++ Attach",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${workspaceRoot}/bin/openrct2",
+            "processId": "${command:pickProcess}",
+            "setupCommands": [
+                {
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "linux": {
+                "MIMode": "gdb"
+            },
+            "osx": {
+                "MIMode": "lldb"
+            },
+            "windows": {
+                "MIMode": "gdb"
+            }
+        }
+    ]
+}

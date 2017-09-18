@@ -1,266 +1,168 @@
-cmake_minimum_required(VERSION 2.6)
-
-#
-# Execute these commands in this directory:
-#
-# 1. mkdir build/; cd build/
-#
-# 2. Choose compiler:
-#   Build with native toolchain:
-#    cmake -DCMAKE_BUILD_TYPE=Debug ..
-#
-#   Build with mingw:
-#    cmake -DCMAKE_TOOLCHAIN_FILE=../CMakeLists_mingw.txt -DCMAKE_BUILD_TYPE=Debug ..
-#
-# 3. make
-#
-
-
-# project title
-set (PROJECT openrct2)
-# OpenRCT2 resource directory
-set (ORCT2_RESOURCE_DIR ${CMAKE_INSTALL_PREFIX}/share/${PROJECT}/)
-
-project(${PROJECT})
-
+# CMAKE project for openrct2
+cmake_minimum_required(VERSION 3.1)
 if (CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
-	message(FATAL_ERROR "Building in-source is not supported! Create a build dir and remove ${CMAKE_SOURCE_DIR}/CMakeCache.txt")
+    message(FATAL_ERROR "Building in-source is not supported! Create a build dir and remove ${CMAKE_SOURCE_DIR}/CMakeCache.txt")
 endif()
 
-add_definitions(-DORCT2_RESOURCE_DIR="${ORCT2_RESOURCE_DIR}")
-add_definitions(-DHAVE_CONFIG_H)
-add_definitions(-DCURL_STATICLIB)
+project(openrct2)
 
-INCLUDE(FindPkgConfig)
+include(FindPkgConfig)
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+include(GNUInstallDirs)
 
-option(DISABLE_HTTP_TWITCH "Disable HTTP and Twitch support.")
-if (DISABLE_HTTP_TWITCH)
-	add_definitions(-DDISABLE_HTTP -DDISABLE_TWITCH)
-endif (DISABLE_HTTP_TWITCH)
+set(ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set(CMAKE_MACOSX_RPATH 1)
 
-option(DISABLE_NETWORK "Disable multiplayer functionality. Mainly for testing.")
-if (DISABLE_NETWORK)
-	add_definitions(-DDISABLE_NETWORK)
-else (DISABLE_NETWORK)
-	if (WIN32)
-		SET(NETWORKLIBS ${NETWORKLIBS} ws2_32)
-	endif (WIN32)
-endif (DISABLE_NETWORK)
+set(TITLE_SEQUENCE_URL  "https://github.com/OpenRCT2/title-sequences/releases/download/v0.1.0/title-sequence-v0.1.0.zip")
+set(TITLE_SEQUENCE_SHA1 "b587d83de508d0b104d14c599b76f8565900fce0")
 
-option(STATIC "Create a static build.")
+option(FORCE32 "Force 32-bit build. It will add `-m32` to compiler flags.")
+option(WITH_TESTS "Build tests")
+option(PORTABLE "Create a portable build (-rpath=$ORIGIN)" OFF)
+option(DOWNLOAD_TITLE_SEQUENCES "Download title sequences during installation." ON)
 
-option(FORCE64 "Force native (x86-64) build. Do not use, for experimental purposes only.")
-if (FORCE64)
-	set(TARGET_M "-m64")
-	set(OBJ_FORMAT "elf64-x86-64")
-	set(LINKER_SCRIPT "ld_script_x86_64.xc")
-	list(APPEND CMAKE_C_FLAGS "-Wno-error=pointer-to-int-cast -Wno-error=int-to-pointer-cast")
-else ()
-	set(TARGET_M "-m32")
-	set(OBJ_FORMAT "elf32-i386")
-	set(LINKER_SCRIPT "ld_script_i386.xc")
-endif ()
+# Define current git branch
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${ROOT_DIR}
+    OUTPUT_VARIABLE OPENRCT2_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+add_definitions(-DOPENRCT2_BRANCH="${OPENRCT2_BRANCH}")
 
-PKG_CHECK_MODULES(PNG libpng>=1.6)
-if (NOT PNG_FOUND)
-	PKG_CHECK_MODULES(PNG libpng16)
-endif (NOT PNG_FOUND)
-if (NOT PNG_FOUND)
-	PKG_CHECK_MODULES(PNG libpng>=1.2)
-endif (NOT PNG_FOUND)
-if (NOT PNG_FOUND)
-	PKG_CHECK_MODULES(PNG REQUIRED libpng12)
-endif (NOT PNG_FOUND)
+# Define commit hash
+execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${ROOT_DIR}
+    OUTPUT_VARIABLE OPENRCT2_COMMIT_SHA1
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+add_definitions(-DOPENRCT2_COMMIT_SHA1="${OPENRCT2_COMMIT_SHA1}")
 
-PKG_CHECK_MODULES(ZLIB REQUIRED zlib)
-PKG_CHECK_MODULES(JANSSON REQUIRED jansson>=2.7)
+# Define short commit hash
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${ROOT_DIR}
+    OUTPUT_VARIABLE OPENRCT2_COMMIT_SHA1_SHORT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
 
-# Handle creating the rct2 text and data files on OS X and Linux
-# See details in src/openrct2.c:openrct2_setup_rct2_segment for how the values
-# were derived.
-if (UNIX)
-  add_custom_command(
-    OUTPUT openrct2_text
-    COMMAND dd if=${CMAKE_CURRENT_SOURCE_DIR}/openrct2.exe of=${CMAKE_BINARY_DIR}/openrct2_text bs=4096 skip=1 count=1187
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/openrct2.exe
-  )
-  add_custom_command(
-    OUTPUT openrct2_data
-    COMMAND dd if=${CMAKE_CURRENT_SOURCE_DIR}/openrct2.exe of=${CMAKE_BINARY_DIR}/openrct2_data bs=4096 skip=1188 count=318
-    COMMAND dd if=/dev/zero of=${CMAKE_BINARY_DIR}/openrct2_data bs=4096 seek=318 count=2630 conv=notrunc
-    COMMAND dd if=${CMAKE_CURRENT_SOURCE_DIR}/openrct2.exe of=${CMAKE_BINARY_DIR}/openrct2_data bs=4096 skip=1506 seek=2948 count=1 conv=notrunc
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/openrct2.exe
-  )
-  add_custom_target(segfiles DEPENDS openrct2_text openrct2_data)
-	if (APPLE)
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sectcreate rct2_text __text ${CMAKE_CURRENT_SOURCE_DIR}/build/openrct2_text -sectcreate rct2_data __data ${CMAKE_CURRENT_SOURCE_DIR}/build/openrct2_data -segaddr rct2_data 0x8a4000 -segprot rct2_data rwx rwx -segaddr rct2_text 0x401000 -segprot rct2_text rwx rwx -fno-pie -read_only_relocs suppress")
-	else (APPLE)
-		# For Linux we have to use objcopy to wrap regular binaries into a linkable
-		# format. We use specific section names which are then referenced in a
-		# bespoke linker script so they can be placed at predefined VMAs.
-		add_custom_command(
-			OUTPUT openrct2_text_section.o
-			COMMAND objcopy --input binary --output ${OBJ_FORMAT} --binary-architecture i386 openrct2_text openrct2_text_section.o --rename-section .data=.rct2_text,contents,alloc,load,readonly,code
-			DEPENDS segfiles
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		)
-		add_custom_command(
-			OUTPUT openrct2_data_section.o
-			COMMAND objcopy --input binary --output ${OBJ_FORMAT} --binary-architecture i386 openrct2_data openrct2_data_section.o --rename-section .data=.rct2_data,contents,alloc,load,readonly,data
-			DEPENDS segfiles
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		)
-		add_custom_target(linkable_sections DEPENDS openrct2_text_section.o openrct2_data_section.o)
-		SET_SOURCE_FILES_PROPERTIES(
-		    openrct2_text_section.o openrct2_data_section.o
-		    PROPERTIES
-		    EXTERNAL_OBJECT true
-		    GENERATED true
-		)
-		# can't use GLOB here, as the files don't exist yet at cmake-time
-		set(RCT2_SECTIONS "${CMAKE_BINARY_DIR}/openrct2_data_section.o" "${CMAKE_BINARY_DIR}/openrct2_text_section.o")
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-T,\"${CMAKE_CURRENT_SOURCE_DIR}/distribution/linux/${LINKER_SCRIPT}\"")
-	endif (APPLE)
-endif (UNIX)
-set(DEBUG_LEVEL 0 CACHE STRING "Select debug level for compilation. Use value in range 0–3.")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEBUG=${DEBUG_LEVEL}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG=${DEBUG_LEVEL}")
+# Tagged builds are not meant to display commit info
+if (NOT OPENRCT2_COMMIT_SHA1_SHORT STREQUAL "HEAD")
+    add_definitions(-DOPENRCT2_COMMIT_SHA1_SHORT="${OPENRCT2_COMMIT_SHA1_SHORT}")
+endif()
 
-# include lib
-include_directories("lib/")
-# add source files
-file(GLOB_RECURSE ORCT2_SOURCES "src/*.c" "src/*.cpp" "src/*.h" "src/*.hpp")
-if (APPLE)
-	file(GLOB_RECURSE ORCT2_MM_SOURCES "src/*.m")
-	set_source_files_properties(${ORCT2_MM_SOURCES} PROPERTIES COMPILE_FLAGS "-x objective-c -fmodules")
-endif (APPLE)
+function (ADD_CHECK_C_COMPILER_FLAG _CFLAGS _CACHE_VAR _FLAG)
+    CHECK_C_COMPILER_FLAG("${_FLAG}" "${_CACHE_VAR}")
+    if (${_CACHE_VAR})
+        set(${_CFLAGS} "${${_CFLAGS}} ${_FLAG}" PARENT_SCOPE)
+    else ()
+        message(STATUS "Unsupported CFLAG: ${_FLAG}")
+    endif ()
+endfunction ()
 
-# set necessary flags to compile code as is
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TARGET_M} -std=gnu99 -fno-pie -fstrict-aliasing -Werror")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TARGET_M} -std=gnu++11 -fno-pie -fstrict-aliasing -Werror")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${TARGET_M}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS}")
+function (ADD_CHECK_CXX_COMPILER_FLAG _CXXFLAGS _CACHE_VAR _FLAG)
+    CHECK_CXX_COMPILER_FLAG("${_FLAG}" "${_CACHE_VAR}")
+    if (${_CACHE_VAR})
+        set(${_CXXFLAGS} "${${_CXXFLAGS}} ${_FLAG}" PARENT_SCOPE)
+    else ()
+        message(STATUS "Unsupported CXXFLAG: ${_FLAG}")
+    endif ()
+endfunction ()
 
+# Launchpad turns on -Wdate-time for compilers that support it, this shouldn't break our build
+ADD_CHECK_C_COMPILER_FLAG(CMAKE_C_FLAGS C_WARN_WRITE_STRINGS -Wno-error=date-time)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_WRITE_STRINGS -Wno-error=date-time)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_NULL_DEREFERENCE -Wnull-dereference)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_SUGGEST_FINAL_TYPES -Wsuggest-final-types)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_SUGGEST_FINAL_METHODS -Wsuggest-final-methods)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_SUGGEST_OVERRIDE -Wsuggest-override)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_DUPLICATED_COND -Wduplicated-cond)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_NON_VIRTUAL_DTOR -Wnon-virtual-dtor)
 if (MINGW)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpack-struct=1")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpack-struct=1")
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+    ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_SUGGEST_OVERRIDE -Wno-error=redundant-decls)
 endif ()
 
-if (STATIC)
-	if (WIN32)
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static")
-	else (WIN32)
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-	endif (WIN32)
+# Items below are not supported by ICC
+ADD_CHECK_C_COMPILER_FLAG(CMAKE_C_FLAGS C_WARN_REDUNDANT_DECLS -Wredundant-decls)
+ADD_CHECK_C_COMPILER_FLAG(CMAKE_C_FLAGS C_WARN_IGNORED_QUALIFIERS -Wignored-qualifiers)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_REDUNDANT_DECLS -Wredundant-decls)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_IGNORED_QUALIFIERS -Wignored-qualifiers)
+
+# -Wstrict-overflow is only active when -fstrict-overflow is enabled, but -fstrict-overflow
+# is enabled on -O2, -O3, -Os. This should help catch bugs locally before they reach Travis
+# As of 2a435bf -Wstrict-overflow=1 passes, but higher values do not.
+set(COMMON_COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS} -fstrict-overflow")
+ADD_CHECK_C_COMPILER_FLAG(CMAKE_C_FLAGS C_WARN_STRICT_OVERFLOW -Wstrict-overflow=1)
+ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_STRICT_OVERFLOW -Wstrict-overflow=1)
+
+
+# Include sub-projects
+include("${ROOT_DIR}/src/openrct2/CMakeLists.txt" NO_POLICY_SCOPE)
+include("${ROOT_DIR}/src/openrct2-cli/CMakeLists.txt" NO_POLICY_SCOPE)
+include("${ROOT_DIR}/src/openrct2-ui/CMakeLists.txt" NO_POLICY_SCOPE)
+
+# g2
+add_custom_command(
+    OUTPUT g2.dat
+    COMMAND ./openrct2 sprite build ${CMAKE_BINARY_DIR}/g2.dat ${ROOT_DIR}/resources/g2/sprites.json
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+add_custom_target(g2 DEPENDS ${PROJECT} g2.dat)
+
+# Include tests
+if (WITH_TESTS)
+    enable_testing()
+    if (UNIX AND (NOT USE_MMAP) AND (NOT DISABLE_RCT2) AND (FORCE32))
+        include("${ROOT_DIR}/test/testpaint/CMakeLists.txt" NO_POLICY_SCOPE)
+    endif ()
+    include("${ROOT_DIR}/test/tests/CMakeLists.txt" NO_POLICY_SCOPE)
 endif ()
 
-option(WITH_BREAKPAD "Enable breakpad")
-if (WITH_BREAKPAD)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_BREAKPAD")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_BREAKPAD")
-	set(BREAKPAD_DIR "/home/janisozaur/workspace/breakpad/src")
-	set(BREAKPAD_INCLUDE_DIR "${BREAKPAD_DIR}/src")
-	set(BREAKPAD_LIBRARY_DIR "${BREAKPAD_DIR}/src/client/linux")
-	set(BREAKPAD_LIBS breakpad_client pthread)
-endif (WITH_BREAKPAD)
-
-# find and include SDL2
-PKG_CHECK_MODULES(SDL2 REQUIRED sdl2 SDL2_ttf)
-if (STATIC)
-	# FreeType is required by SDL2_ttf, but not wired up properly in package
-	PKG_CHECK_MODULES(FREETYPE REQUIRED freetype2)
-	SET(SDL2LIBS ${SDL2_STATIC_LIBRARIES} ${FREETYPE_STATIC_LIBRARIES})
-else (STATIC)
-	SET(SDL2LIBS ${SDL2_LIBRARIES})
-endif (STATIC)
-
-if (STATIC)
-	SET(REQUIREDLIBS ${PNG_STATIC_LIBRARIES} ${JANSSON_STATIC_LIBRARIES} ${ZLIB_STATIC_LIBRARIES})
-else (STATIC)
-	SET(REQUIREDLIBS ${PNG_LIBRARIES} ${JANSSON_LIBRARIES} ${ZLIB_LIBRARIES})
-endif (STATIC)
-
-if (NOT DISABLE_HTTP_TWITCH)
-	PKG_CHECK_MODULES(LIBCURL REQUIRED libcurl)
-	PKG_CHECK_MODULES(SSL REQUIRED openssl)
-	if (WIN32)
-		# Curl depends on openssl and ws2 in mingw builds, but is not wired up in pkg-config
-		set(WSLIBS ws2_32)
-	endif (WIN32)
-	if (STATIC)
-		SET(HTTPLIBS ${LIBCURL_STATIC_LIBRARIES} ${SSL_STATIC_LIBRARIES} ${WSLIBS})
-	else (STATIC)
-		SET(HTTPLIBS ${LIBCURL_LIBRARIES} ${SSL_LIBRARIES} ${WSLIBS})
-	endif (STATIC)
-endif (NOT DISABLE_HTTP_TWITCH)
-
-PKG_CHECK_MODULES(SPEEX REQUIRED speexdsp)
-
-if (UNIX)
-	# Include libdl for dlopen
-	set(DLLIB dl)
-endif (UNIX)
-
-INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIRS} ${LIBCURL_INCLUDE_DIRS} ${JANSSON_INCLUDE_DIRS} ${SPEEX_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${BREAKPAD_INCLUDE_DIR})
-
-LINK_DIRECTORIES(${SDL2_LIBRARY_DIRS} ${JANSSON_LIBRARY_DIRS} ${LIBCURL_LIBRARY_DIRS} ${PNG_LIBRARY_DIRS} ${ZLIB_LIBRARY_DIRS} ${BREAKPAD_LIBRARY_DIR})
-
-# Disable optimizations for addresses.c for all compilers, to allow optimized
-# builds without need for -fno-omit-frame-pointer
-set_source_files_properties(src/addresses.c PROPERTIES COMPILE_FLAGS -O0)
-
-if (WIN32)
-	# build as library for now, replace with add_executable
-	add_library(${PROJECT} SHARED ${ORCT2_SOURCES} ${SPEEX_SOURCES})
-else (WIN32)
-	add_executable(${PROJECT} ${ORCT2_SOURCES} ${ORCT2_MM_SOURCES} ${RCT2_SECTIONS})
-	add_dependencies(${PROJECT} segfiles)
-	if (NOT APPLE)
-		add_dependencies(${PROJECT} linkable_sections)
-	endif ()
-	add_custom_command(
-		OUTPUT g2.dat
-		COMMAND ./openrct2 sprite build ${CMAKE_BINARY_DIR}/g2.dat ${CMAKE_CURRENT_SOURCE_DIR}/resources/g2/
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		)
-	add_custom_target(g2 DEPENDS ${PROJECT} g2.dat)
-endif (WIN32)
-
-if (UNIX AND NOT APPLE)
-	# FontConfig for TrueType fonts.
-	PKG_CHECK_MODULES(FONTCONFIG REQUIRED fontconfig)
-	INCLUDE_DIRECTORIES(${FONTCONFIG_INCLUDE_DIRS})
-	TARGET_LINK_LIBRARIES(${PROJECT} ${FONTCONFIG_LIBRARIES})
-endif (UNIX AND NOT APPLE)
-
-
-# install into ${CMAKE_INSTALL_PREFIX}/bin/
-#install (TARGETS ${PROJECT} DESTINATION bin)
-
-# libopenrct2.dll -> openrct2.dll
-set_target_properties(${PROJECT} PROPERTIES PREFIX "")
-
-TARGET_LINK_LIBRARIES(${PROJECT} ${SDL2LIBS} ${HTTPLIBS} ${NETWORKLIBS} ${SPEEX_LIBRARIES} ${DLLIB} ${REQUIREDLIBS} ${BREAKPAD_LIBS})
-
-if (APPLE OR STATIC)
-	FIND_LIBRARY(ICONV_LIBRARIES NAMES iconv libiconv libiconv-2 c)
-	TARGET_LINK_LIBRARIES(${PROJECT} ${ICONV_LIBRARIES})
-endif (APPLE OR STATIC)
-
+# Install
 # Don't recurse, grab all *.txt and *.md files
-file(GLOB DOC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/distribution/*.txt")
-list(APPEND DOC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/contributors.md" "${CMAKE_CURRENT_SOURCE_DIR}/licence.txt")
+file(GLOB DOC_FILES "${ROOT_DIR}/distribution/*.txt")
+list(APPEND DOC_FILES "${ROOT_DIR}/contributors.md"
+                      "${ROOT_DIR}/licence.txt")
 
 # CMake does not allow specifying a dependency chain which includes built-in
 # targets, like `install`, so we have to trick it and execute dependency ourselves.
 install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build \"${CMAKE_CURRENT_BINARY_DIR}\" --target g2)")
-install(TARGETS ${PROJECT} RUNTIME DESTINATION bin)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/g2.dat" DESTINATION share/${PROJECT})
-install(DIRECTORY data/ DESTINATION share/${PROJECT})
-install(FILES ${DOC_FILES} DESTINATION share/doc/${PROJECT})
-
-set(CPACK_PACKAGE_VERSION_MAJOR 0)
-set(CPACK_PACKAGE_VERSION_MINOR 0)
-set(CPACK_PACKAGE_VERSION_PATCH 5)
-INCLUDE(CPack)
+IF (DOWNLOAD_TITLE_SEQUENCES)
+    install(CODE "file(DOWNLOAD ${TITLE_SEQUENCE_URL} \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT}/title/title-sequences.zip EXPECTED_HASH SHA1=${TITLE_SEQUENCE_SHA1} SHOW_PROGRESS)")
+    install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E chdir \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT}/title/ \"${CMAKE_COMMAND}\" -E tar xvf title-sequences.zip)")
+    install(CODE "file(REMOVE \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT}/title/title-sequences.zip)")
+endif ()
+if (WIN32)
+    install(TARGETS "libopenrct2" RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+                                  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+else ()
+    if (PORTABLE)
+        install(TARGETS "libopenrct2" LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}"
+                                      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+    else ()
+        install(TARGETS "libopenrct2" LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+                                      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+    endif ()
+endif ()
+install(TARGETS "openrct2" RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(TARGETS "openrct2-cli" OPTIONAL RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/g2.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+install(DIRECTORY "data/" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+install(FILES ${DOC_FILES} DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+install(FILES "distribution/linux/openrct2.appdata.xml" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/metainfo")
+install(FILES "resources/logo/icon_x16.png" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/16x16/apps" RENAME "openrct2.png")
+install(FILES "resources/logo/icon_x32.png" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/32x32/apps" RENAME "openrct2.png")
+install(FILES "resources/logo/icon_x64.png" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/64x64/apps" RENAME "openrct2.png")
+install(FILES "resources/logo/icon_x128.png" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps" RENAME "openrct2.png")
+install(FILES "resources/logo/icon_x256.png" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps" RENAME "openrct2.png")
+install(FILES "resources/logo/icon_flag.svg" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps" RENAME "openrct2.svg")
+install(FILES "distribution/linux/openrct2.desktop" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications")
+install(FILES "distribution/linux/openrct2-savegame.desktop" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications")
+install(FILES "distribution/linux/openrct2-scenario.desktop" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications")
+install(FILES "distribution/linux/openrct2-mimeinfo.xml" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/mime/packages/" RENAME "openrct2.xml")
+install(DIRECTORY "distribution/man/" DESTINATION "${CMAKE_INSTALL_MANDIR}/man6" FILES_MATCHING PATTERN "*.6")
