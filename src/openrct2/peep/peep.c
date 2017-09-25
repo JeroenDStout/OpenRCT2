@@ -3330,6 +3330,21 @@ static void peep_update_ride_prepare_for_state_9(rct_peep* peep){
 
     uint8 exit_direction = (map_element == NULL ? 0 : map_element_get_direction(map_element));
 
+        // If our exit has an open side other than the one facing the ride, pick a random one
+    
+    uint8 exitEdges = get_entrance_opening_flags(map_element) & ~(1 << ((exit_direction)%4));
+    if (exitEdges > 0) {
+        uint8 exitCount = (exitEdges & 0x1) + ((exitEdges >> 1) & 0x1) + ((exitEdges >> 2) & 0x1) + ((exitEdges >> 3) & 0x1);
+        uint8 randomExit = (scenario_rand_max(0xFF) * (uint32)(exitCount)) / 0xFF;
+        exit_direction = 0;
+        for (int i = 0; i < 4; i++) {
+            if (exitEdges & (1 << i) && randomExit-- == 0)
+                break;
+            exit_direction++;
+        }
+        exit_direction = (exit_direction+2) % 4;
+    }
+
     x *= 32;
     y *= 32;
     x += 16;

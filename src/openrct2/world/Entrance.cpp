@@ -410,6 +410,8 @@ static money32 RideEntranceExitPlace(sint16 x,
             mapElement->properties.entrance.index = stationNum << 4;
             mapElement->properties.entrance.ride_index = rideIndex;
             mapElement->type = MAP_ELEMENT_TYPE_ENTRANCE | direction;
+                // set our bits for the sides which are open
+            set_entrance_opening_flags(mapElement, 1 << direction);
 
             if (flags & GAME_COMMAND_FLAG_GHOST)
             {
@@ -438,7 +440,22 @@ static money32 RideEntranceExitPlace(sint16 x,
                 maze_entrance_hedge_removal(x, y, mapElement);
             }
 
-            footpath_connect_edges(x, y, mapElement, flags);
+                // For all three possible adjacent squares, attempt to reconnect the foothpaths
+            sint16 nX, nY;
+            rct_map_element* pathElement;
+            nX = x + TileDirectionDelta[(direction+2)%4].x;
+            nY = y + TileDirectionDelta[(direction+2)%4].y;
+            pathElement = map_get_footpath_element_highest_under(nX >> 5, nY >> 5, mapElement->base_height);
+            if (pathElement) footpath_connect_edges(nX, nY, pathElement, flags);
+            nX = x + TileDirectionDelta[(direction+3)%4].x;
+            nY = y + TileDirectionDelta[(direction+3)%4].y;
+            pathElement = map_get_footpath_element_highest_under(nX >> 5, nY >> 5, mapElement->base_height);
+            if (pathElement) footpath_connect_edges(nX, nY, pathElement, flags);
+            nX = x + TileDirectionDelta[(direction+1)%4].x;
+            nY = y + TileDirectionDelta[(direction+1)%4].y;
+            pathElement = map_get_footpath_element_highest_under(nX >> 5, nY >> 5, mapElement->base_height);
+            if (pathElement) footpath_connect_edges(nX, nY, pathElement, flags);
+
             footpath_update_queue_chains();
 
             map_invalidate_tile_full(x, y);
@@ -859,4 +876,15 @@ extern "C"
             return;
         } while (!map_element_is_last_for_tile(mapElement++));
     }
+}
+
+uint8 get_entrance_opening_flags(rct_map_element *mapElement)
+{
+    return mapElement->properties.entrance.index & 0xF;
+}
+
+void set_entrance_opening_flags(rct_map_element *mapElement, uint8 flags)
+{
+    mapElement->properties.entrance.index   &= ~0xF;
+    mapElement->properties.entrance.index   |= (flags) & 0xF;
 }

@@ -28,14 +28,70 @@
 
 static uint32 _unk9E32BC;
 
+    /*  HACK HACK HACK
+     *
+     *  This function goes into sprite memory and sets a number of columns to fully transparent.
+     *   Effectively this allows us to use the four rotations of a sprite as a set of two open/closed halves.
+     *
+     *  For now glass entrances are broken and tunnels will not render correctly.
+     */
+
+static void may_god_forgive_me_hack(uint32 image_id, uint32 x, bool removeLeft) {
+    rct_g1_element *elem;
+
+    elem = gfx_get_g1_element((image_id+0) & 0x7FFFF);
+
+    for (int y = 0; y < elem->height; y++) {
+        uint8 *lineData = elem->offset + ((uint16*)elem->offset)[y];
+        
+        uint8 isEndOfLine = 0;
+
+        while (!isEndOfLine) {
+            uint8* copySrc = lineData;
+            
+            uint8 dataSize    = *copySrc++;
+            uint8 firstPixelX = *copySrc++;
+            
+            isEndOfLine = dataSize & 0x80;  // If the last bit in dataSize is set, then this is the last line
+            dataSize &= 0x7F;               // The rest of the bits are the actual size
+            
+            //Have our next source pointer point to the next data section
+            lineData = copySrc + dataSize;
+            
+            sint32 x_start = firstPixelX;
+            sint32 numPixels = dataSize;
+            
+            if (removeLeft) {
+                sint32 toRemove = x - x_start;
+                while (toRemove-- > 0 && numPixels-- > 0) {
+                    *(copySrc++) = 0x0;
+                }
+            }
+            else {
+                sint32 toSkip = x - x_start;
+                if (toSkip > 0) {
+                    copySrc += toSkip;
+                    numPixels -= toSkip;
+                }
+                while (numPixels-- > 0) {
+                    *(copySrc++) = 0x0;
+                }
+            }
+        }
+    }
+}
+
 /**
  *
  *  rct2: 0x0066508C, 0x00665540
  */
 static void ride_entrance_exit_paint(paint_session * session, uint8 direction, sint32 height, rct_map_element* map_element)
 {
-
+    uint8 edges = get_entrance_opening_flags(map_element);
     uint8 is_exit = map_element->properties.entrance.type == ENTRANCE_TYPE_RIDE_EXIT;
+
+        // we override standard direction code from here on
+    direction = 0;
 
     if (gTrackDesignSaveMode) {
         if (map_element->properties.entrance.ride_index != gTrackDesignSaveRideIndex)
@@ -100,15 +156,60 @@ static void ride_entrance_exit_paint(paint_session * session, uint8 direction, s
     }
     // Format modified to stop repeated code
 
+    //image_id += 1;
+
+    {
+        // HACK HACK HACK
+        //  we brute-edit the sprites!
+        //  don't try this at home
+        // Also don't do this here, but for now it works.
+        // (Coloured windows don't work for now, this is a proof of concept)
+        
+        may_god_forgive_me_hack((image_id+4) & 0x7FFFF, 31, false);
+        may_god_forgive_me_hack((image_id+5) & 0x7FFFF, 31, false);
+        may_god_forgive_me_hack((image_id+6) & 0x7FFFF, 31, true);
+        may_god_forgive_me_hack((image_id+7) & 0x7FFFF, 31, true);
+    }
+
     // Each entrance is split into 2 images for drawing
     // Certain entrance styles have another 2 images to draw for coloured windows
 
     sint8 ah = is_exit ? 0x23 : 0x33;
 
-    sint16 lengthY = (direction & 1) ? 28 : 2;
-    sint16 lengthX = (direction & 1) ? 2 : 28;
+    sint16 lengthY = 28;//(direction & 1) ? 28 : 2;
+    sint16 lengthX = 28;//(direction & 1) ? 2 : 28;
 
-    sub_98197C(session, image_id, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
+    lengthX = 0;
+    lengthY = 0;
+
+    bool showOpenLeft = false;
+    bool showOpenRight = false;
+
+    switch (get_current_rotation()) {
+    case 0:
+        showOpenLeft = (edges & 0x4);
+        showOpenRight = (edges & 0x2);
+        break;
+    case 1:
+        showOpenLeft = (edges & 0x2);
+        showOpenRight = (edges & 0x1);
+        break;
+    case 2:
+        showOpenLeft = (edges & 0x1);
+        showOpenRight = (edges & 0x8);
+        break;
+    case 3:
+        showOpenLeft = (edges & 0x8);
+        showOpenRight = (edges & 0x4);
+        break;
+    }
+    
+        // Render interior when the element is open
+
+    if (showOpenLeft)
+        sub_98197C(session, image_id+0, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
+    if (showOpenRight)
+        sub_98197C(session, image_id+3, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
 
     if (transparant_image_id){
         if (is_exit){
@@ -123,12 +224,23 @@ static void ride_entrance_exit_paint(paint_session * session, uint8 direction, s
 
     image_id += 4;
 
-    sub_98197C(session, image_id, 0, 0, lengthX, lengthY, ah, height, (direction & 1) ? 28 : 2, (direction & 1) ? 2 : 28, height, get_current_rotation());
+        // Render front
+    
+    if (showOpenLeft)
+        sub_98197C(session, image_id+0, 0, 0, 28, 2, ah, height, 2, 2, height, get_current_rotation());
+    else
+        sub_98197C(session, image_id+1, 0, 0, 2, 28, ah, height, 2, 2, height, get_current_rotation());
+    if (showOpenRight)
+        sub_98197C(session, image_id+3, 0, 0, 2, 28, ah, height, 2, 2, height, get_current_rotation());
+    else
+        sub_98197C(session, image_id+2, 0, 0, 28, 2, ah, height, 2, 2, height, get_current_rotation());
 
     if (transparant_image_id){
         transparant_image_id += 4;
         sub_98199C(session, transparant_image_id, 0, 0, lengthX, lengthY, ah, height, (direction & 1) ? 28 : 2, (direction & 1) ? 2 : 28, height, get_current_rotation());
     }
+
+        // TODO: Tunnels are broken for now
 
     if (direction & 1) {
         paint_util_push_tunnel_right(session, height, TUNNEL_6);

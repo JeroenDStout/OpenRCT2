@@ -118,7 +118,10 @@ static void automatically_set_peep_spawn(sint32 x, sint32 y, sint32 z)
     peepSpawn->z = z;
 }
 
-static rct_map_element *map_get_footpath_element(sint32 x, sint32 y, sint32 z)
+    /*   Returns the first footpath at the xy that is equal to z.
+     */
+
+rct_map_element *map_get_footpath_element(sint32 x, sint32 y, sint32 z)
 {
     rct_map_element *mapElement;
 
@@ -129,6 +132,26 @@ static rct_map_element *map_get_footpath_element(sint32 x, sint32 y, sint32 z)
     } while (!map_element_is_last_for_tile(mapElement++));
 
     return NULL;
+}
+
+    /*   Returns the first footpath at the xy that is not higher than z.
+     */
+
+rct_map_element *map_get_footpath_element_highest_under(sint32 x, sint32 y, sint32 z)
+{
+    rct_map_element *mapElement;
+    rct_map_element *returnElement = 0;
+
+    mapElement = map_get_first_element_at(x, y);
+    do {
+        if (mapElement->base_height > z)
+            break;
+        if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_PATH)
+            continue;
+        returnElement = mapElement;
+    } while (!map_element_is_last_for_tile(mapElement++));
+
+    return returnElement;
 }
 
 static rct_map_element *map_get_footpath_element_slope(sint32 x, sint32 y, sint32 z, sint32 slope)
@@ -1227,11 +1250,39 @@ static void loc_6A6D7E(
                 break;
             case MAP_ELEMENT_TYPE_ENTRANCE:
                 if (z == mapElement->base_height) {
-                    if (entrance_has_direction(mapElement, ((direction - map_element_get_direction(mapElement)) & MAP_ELEMENT_DIRECTION_MASK) ^ 2)) {
+                        // Check if we can connect with an entrance
+
+                    bool allowConnect = false;
+                    uint8 entranceFlags = get_entrance_opening_flags(mapElement);
+
+                    switch (mapElement->properties.entrance.type) {
+                    case ENTRANCE_TYPE_PARK_ENTRANCE:
+                        allowConnect = entrance_has_direction(mapElement, ((direction - map_element_get_direction(mapElement)) & MAP_ELEMENT_DIRECTION_MASK) ^ 2);
+                        break;
+                    case ENTRANCE_TYPE_RIDE_ENTRANCE:
+                            // Allow a new connexion only if we do not yet have a previous one
+                            //  ATM, entrances cannot have multiple queues.
+                        if (entranceFlags & ((direction + 2) % 4)) {
+                            allowConnect = true;
+                        }
+                        else if (entranceFlags == (1 << map_element_get_direction(mapElement))) {
+                            allowConnect = true;
+                        }
+                        break;
+                    case ENTRANCE_TYPE_RIDE_EXIT:
+                            // We can always connect to any available side of an exit
+                        allowConnect = true;
+                        break;
+                    }
+
+                    if (allowConnect) {
                         if (query) {
                             neighbour_list_push(neighbourList, 8, direction, mapElement->properties.entrance.ride_index,  mapElement->properties.entrance.index);
                         } else {
                             if (mapElement->properties.entrance.type != ENTRANCE_TYPE_PARK_ENTRANCE) {
+                                    // Modify the entrance flags to enable the current direction
+                                set_entrance_opening_flags(mapElement, entranceFlags | 1 << ((direction + 2) % 4));
+                                map_invalidate_element(x, y, mapElement);
                                 footpath_queue_chain_push(mapElement->properties.entrance.ride_index);
                             }
                         }
@@ -1292,9 +1343,13 @@ static void loc_6A6C85(
         return;
 
     if (map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_ENTRANCE) {
-        if (!entrance_has_direction(mapElement, (direction - mapElement->type) & 3)) {
+            // Only the park entrance connects via the code below, ride entrances
+            //  are updates when they are placed via the paths around them
+        
+        if (mapElement->properties.entrance.type != ENTRANCE_TYPE_PARK_ENTRANCE)
             return;
-        }
+        if (!entrance_has_direction(mapElement, (direction - mapElement->type) & 0x3))
+            return;
     }
 
     if (map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_TRACK) {
@@ -1532,8 +1587,29 @@ void footpath_update_queue_chains()
                 if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_ENTRANCE) continue;
                 if (mapElement->base_height != z) continue;
                 if (mapElement->properties.entrance.type != ENTRANCE_TYPE_RIDE_ENTRANCE) continue;
+                
+                    // Check if the entrance has openings in any direction which is not towards the ride.
 
-                uint8 direction = map_element_get_direction_with_offset(mapElement, 2);
+                uint8 direction;
+                uint8 edges = get_entrance_opening_flags(mapElement) & ~(1 << map_element_get_direction(mapElement));
+                switch (edges) {
+                default:
+                        // this shouldn't happen
+                    direction = map_element_get_direction_with_offset(mapElement, 2);
+                    break;
+                case 1:
+                    direction = 0;
+                    break;
+                case 2:
+                    direction = 1;
+                    break;
+                case 4:
+                    direction = 2;
+                    break;
+                case 8:
+                    direction = 3;
+                    break;
+                }
                 footpath_chain_ride_queue(rideIndex, i, x << 5, y << 5, mapElement, direction);
             } while (!map_element_is_last_for_tile(mapElement++));
         }
@@ -2080,8 +2156,15 @@ static void footpath_remove_edges_towards(sint32 x, sint32 y, sint32 z0, sint32 
 
     mapElement = map_get_first_element_at(x >> 5, y >> 5);
     do {
-        if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_PATH)
+        if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_PATH) {
+                // If this is an entrance we have to close the side facing the path
+            if (map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_ENTRANCE) {
+                if (z1 != mapElement->base_height)
+                    continue;
+                set_entrance_opening_flags(mapElement, get_entrance_opening_flags(mapElement) & ~(1 << ((direction + 2) % 4)));
+            }
             continue;
+        }
 
         if (z1 == mapElement->base_height) {
             if (footpath_element_is_sloped(mapElement)) {
