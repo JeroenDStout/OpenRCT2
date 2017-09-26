@@ -902,7 +902,7 @@ static const uint8 peep_extra_item_containers[] = {
  */
 static void sub_68F41A(rct_peep *peep, sint32 index)
 {
-    peepex_base_update(peep, index);
+    peepex_base_update(peep);
 
     if (peep->type == PEEP_TYPE_STAFF){
         if (peep->staff_type != STAFF_TYPE_SECURITY)
