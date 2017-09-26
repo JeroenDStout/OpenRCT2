@@ -31,6 +31,7 @@
 #include "../world/scenery.h"
 #include "../world/sprite.h"
 #include "peep.h"
+#include "peepex.h"
 #include "staff.h"
 
 const rct_string_id StaffCostumeNames[] = {
@@ -1475,9 +1476,12 @@ static void staff_entertainer_update_nearby_peeps(rct_peep* peep) {
  *  rct2: 0x006C05AE
  */
 static sint32 staff_path_finding_entertainer(rct_peep* peep) {
+    peepex_entertainer_per_tile(peep);
 
     if (((scenario_rand() & 0xFFFF) <= 0x4000) &&
         (peep->action == PEEP_ACTION_NONE_1 || peep->action == PEEP_ACTION_NONE_2)) {
+        
+        peepex_entertainer_does_event(peep);
 
         invalidate_sprite_2((rct_sprite*)peep);
 

@@ -364,6 +364,27 @@ rct_map_element* map_get_path_element_at(sint32 x, sint32 y, sint32 z){
     return NULL;
 }
 
+rct_map_element* map_get_path_element_below_or_at(sint32 x, sint32 y, sint32 z){
+    rct_map_element *mapElement = map_get_first_element_at(x, y);
+    rct_map_element *correctElement = NULL;
+
+    if (mapElement == NULL)
+        return NULL;
+
+    // Find the path element at or below known z
+    do {
+        if (mapElement->base_height > z)
+            return correctElement;
+        if (mapElement->flags & MAP_ELEMENT_FLAG_GHOST)
+            continue;
+        if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_PATH)
+            continue;
+        correctElement = mapElement;
+    } while (!map_element_is_last_for_tile(mapElement++));
+
+    return correctElement;
+}
+
 rct_map_element* map_get_banner_element_at(sint32 x, sint32 y, sint32 z, uint8 position) {
     rct_map_element *mapElement = map_get_first_element_at(x, y);
 

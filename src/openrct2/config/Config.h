@@ -135,6 +135,19 @@ typedef struct TwitchConfiguration
     bool        enable_news;
 } TwitchConfiguration;
 
+typedef struct PeepExConfiguration
+{
+    sint32      guest_max_time_in_park;
+    bool        enable_sidestepping;
+    bool        enable_messy_queue;
+    bool        enable_messy_walking;
+    bool        enable_messy_congestion;
+	bool		enable_buddies;
+    bool        enable_hamelin_entertainer;
+    bool        enable_rail_crossings;
+    bool        enable_crime;
+} PeepExConfiguration;
+
 typedef struct NetworkConfiguration
 {
     utf8 *      player_name;
@@ -232,6 +245,7 @@ extern "C"
     extern InterfaceConfiguration       gConfigInterface;
     extern SoundConfiguration           gConfigSound;
     extern TwitchConfiguration          gConfigTwitch;
+    extern PeepExConfiguration          gConfigPeepEx;
     extern NetworkConfiguration         gConfigNetwork;
     extern NotificationConfiguration    gConfigNotifications;
     extern FontConfiguration            gConfigFonts;

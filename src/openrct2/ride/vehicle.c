@@ -41,6 +41,7 @@
 #include "track_data.h"
 #include "vehicle.h"
 #include "vehicle_data.h"
+#include "vehicleex.h"
 
 static void vehicle_update(rct_vehicle *vehicle);
 
@@ -2789,6 +2790,10 @@ static void vehicle_update_departing(rct_vehicle* vehicle) {
     Ride* ride = get_ride(vehicle->ride);
     rct_ride_entry* rideEntry = get_ride_entry(vehicle->ride_subtype);
 
+    if (gConfigPeepEx.enable_rail_crossings) {
+        vehicleex_update_crossings(vehicle);
+    }
+
     if (vehicle->sub_state == 0) {
         if (vehicle->update_flags & VEHICLE_UPDATE_FLAG_BROKEN_TRAIN) {
             if (ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN)
@@ -3259,6 +3264,10 @@ static void vehicle_update_travelling(rct_vehicle* vehicle) {
     if (_vehicleBreakdown == 0 && ride->mode == RIDE_MODE_ROTATING_LIFT)
         return;
 
+    if (gConfigPeepEx.enable_rail_crossings) {
+        vehicleex_update_crossings(vehicle);
+    }
+
     if (vehicle->sub_state == 2) {
         vehicle->velocity = 0;
         vehicle->acceleration = 0;
@@ -3448,6 +3457,10 @@ static void vehicle_update_arriving(rct_vehicle* vehicle)
         ride->mechanic_status != RIDE_MECHANIC_STATUS_HAS_FIXED_STATION_BRAKES
     ) {
         unkF64E35 = 0;
+    }
+
+    if (gConfigPeepEx.enable_rail_crossings) {
+        vehicleex_update_crossings(vehicle);
     }
 
     rct_ride_entry* rideEntry = get_ride_entry(vehicle->ride_subtype);

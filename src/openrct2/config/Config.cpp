@@ -476,6 +476,38 @@ namespace Config
         writer->WriteBoolean("news", model->enable_news);
     }
 
+    static void ReadPeepEx(IIniReader * reader)
+    {
+        if (reader->ReadSection("peepEx"))
+        {
+            auto model = &gConfigPeepEx;
+            model->guest_max_time_in_park = reader->GetSint32("guest_max_time_in_park", -1);
+            model->enable_sidestepping = reader->GetBoolean("enable_sidestepping", true);
+            model->enable_messy_queue = reader->GetBoolean("enable_messy_queue", true);
+            model->enable_messy_walking = reader->GetBoolean("enable_messy_walking", true);
+            model->enable_messy_congestion = reader->GetBoolean("enable_messy_congestion", true);
+            model->enable_buddies = reader->GetBoolean("enable_buddies", true);
+            model->enable_hamelin_entertainer = reader->GetBoolean("enable_hamelin_entertainer", true);
+            model->enable_rail_crossings = reader->GetBoolean("enable_rail_crossings", true);
+            model->enable_crime = reader->GetBoolean("enable_crime", true);
+        }
+    }
+
+    static void WritePeepEx(IIniWriter * writer)
+    {
+        auto model = &gConfigPeepEx;
+        writer->WriteSection("peepEx");
+        writer->WriteSint32("guest_max_time_in_park", model->guest_max_time_in_park);
+        writer->WriteBoolean("enable_sidestepping", model->enable_sidestepping);
+        writer->WriteBoolean("enable_messy_queue", model->enable_messy_queue);
+        writer->WriteBoolean("enable_messy_walking", model->enable_messy_walking);
+        writer->WriteBoolean("enable_messy_congestion", model->enable_messy_congestion);
+        writer->WriteBoolean("enable_buddies", model->enable_buddies);
+        writer->WriteBoolean("enable_hamelin_entertainer", model->enable_hamelin_entertainer);
+        writer->WriteBoolean("enable_rail_crossings", model->enable_rail_crossings);
+        writer->WriteBoolean("enable_crime", model->enable_crime);
+    }
+
     static void ReadFont(IIniReader * reader)
     {
         if (reader->ReadSection("font"))
@@ -525,6 +557,7 @@ namespace Config
             ReadNetwork(reader.get());
             ReadNotifications(reader.get());
             ReadTwitch(reader.get());
+            ReadPeepEx(reader.get());
             ReadFont(reader.get());
             return true;
         }
@@ -546,6 +579,7 @@ namespace Config
             ReadNetwork(reader.get());
             ReadNotifications(reader.get());
             ReadTwitch(reader.get());
+            ReadPeepEx(reader.get());
             ReadFont(reader.get());
             return true;
         }
@@ -567,6 +601,7 @@ namespace Config
             WriteNetwork(writer.get());
             WriteNotifications(writer.get());
             WriteTwitch(writer.get());
+            WritePeepEx(writer.get());
             WriteFont(writer.get());
             return true;
         }
@@ -624,6 +659,7 @@ extern "C"
     InterfaceConfiguration       gConfigInterface;
     SoundConfiguration           gConfigSound;
     TwitchConfiguration          gConfigTwitch;
+    PeepExConfiguration          gConfigPeepEx;
     NetworkConfiguration         gConfigNetwork;
     NotificationConfiguration    gConfigNotifications;
     FontConfiguration            gConfigFonts;
