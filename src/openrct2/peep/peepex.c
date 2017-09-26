@@ -726,18 +726,22 @@ sint32 peep_move_one_tile_messy(sint32 x, sint32 y, uint8 direction, rct_peep* p
 
 void peepex_entertainer_per_tile(rct_peep *peep)
 {
-    peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
-    e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VISUAL_ODDITY;
-    e.primary_peep   = peep;
-    peepex_broadcast_event(&e);
+    if (gConfigPeepEx.enable_hamelin_entertainer) {
+        peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
+        e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VISUAL_ODDITY;
+        e.primary_peep   = peep;
+        peepex_broadcast_event(&e);
+    }
 }
 
 void peepex_entertainer_does_event(rct_peep *peep)
 {
-    peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
-    e.broadcast_type = PEEPEX_BROADCAST_EVENT_HAMELIN_DISPLAY;
-    e.primary_peep   = peep;
-    peepex_broadcast_event(&e);
+    if (gConfigPeepEx.enable_hamelin_entertainer) {
+        peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
+        e.broadcast_type = PEEPEX_BROADCAST_EVENT_HAMELIN_DISPLAY;
+        e.primary_peep   = peep;
+        peepex_broadcast_event(&e);
+    }
 }
 
 void peepex_prepare_range(peepex_find_peep_in_range_instr *instr)
