@@ -125,6 +125,7 @@ void peepex_entertainer_per_tile(rct_peep *peep);
 void peepex_entertainer_does_event(rct_peep *peep);
 
     // interests
+void peepex_update_interest(rct_peep*);
 uint8 peepex_effective_peep_interest_in_generic_events(rct_peep *peep);
 uint8 peepex_effective_peep_interest_in_entertainers(rct_peep *peep);
 
