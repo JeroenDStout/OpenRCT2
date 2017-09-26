@@ -536,7 +536,7 @@ typedef struct rct_peep {
     uint8 peepex_interest_in_misc;  // 0x62
     uint8 peepex_event_countdown;   // 0x63
     uint16 peepex_next_in_group;    // 0x64
-    uint16 peepex_next_in_faction;  // 0x66
+    uint16 peepex_remembered_peep;  // 0x66
     uint8 current_ride;             // 0x68
     uint8 current_ride_station;     // 0x69
     uint8 current_train;            // 0x6A
