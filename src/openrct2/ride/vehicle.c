@@ -2790,10 +2790,6 @@ static void vehicle_update_departing(rct_vehicle* vehicle) {
     Ride* ride = get_ride(vehicle->ride);
     rct_ride_entry* rideEntry = get_ride_entry(vehicle->ride_subtype);
 
-    if (gConfigPeepEx.enable_rail_crossings) {
-        vehicleex_update_crossings(vehicle);
-    }
-
     if (vehicle->sub_state == 0) {
         if (vehicle->update_flags & VEHICLE_UPDATE_FLAG_BROKEN_TRAIN) {
             if (ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN)
@@ -2920,6 +2916,9 @@ static void vehicle_update_departing(rct_vehicle* vehicle) {
         else if (ride->mode == RIDE_MODE_SHUTTLE) {
             vehicle->update_flags ^= VEHICLE_UPDATE_FLAG_3;
             vehicle->velocity = 0;
+                // as we flip directions we want vehicleex to think we are
+                //  entering a new tile
+            vehicleex_per_tile(vehicle, !(vehicle->update_flags & VEHICLE_UPDATE_FLAG_3));
         }
     }
 
@@ -3264,10 +3263,6 @@ static void vehicle_update_travelling(rct_vehicle* vehicle) {
     if (_vehicleBreakdown == 0 && ride->mode == RIDE_MODE_ROTATING_LIFT)
         return;
 
-    if (gConfigPeepEx.enable_rail_crossings) {
-        vehicleex_update_crossings(vehicle);
-    }
-
     if (vehicle->sub_state == 2) {
         vehicle->velocity = 0;
         vehicle->acceleration = 0;
@@ -3457,10 +3452,6 @@ static void vehicle_update_arriving(rct_vehicle* vehicle)
         ride->mechanic_status != RIDE_MECHANIC_STATUS_HAS_FIXED_STATION_BRAKES
     ) {
         unkF64E35 = 0;
-    }
-
-    if (gConfigPeepEx.enable_rail_crossings) {
-        vehicleex_update_crossings(vehicle);
     }
 
     rct_ride_entry* rideEntry = get_ride_entry(vehicle->ride_subtype);
@@ -7676,6 +7667,7 @@ loc_6DAEB9:
     // Track Total Progress is in the two bytes before the move info list
     uint16 trackTotalProgress = vehicle_get_move_info_size(vehicle->var_CD, vehicle->track_type);
     if (regs.ax >= trackTotalProgress) {
+        vehicleex_per_tile(vehicle, true);
         if (!vehicle_update_track_motion_forwards_get_new_track(vehicle, trackType, ride, rideEntry)) {
             goto loc_6DB94A;
         }
@@ -7995,6 +7987,7 @@ loc_6DBA33:;
 
     regs.ax = vehicle->track_progress - 1;
     if (regs.ax == -1) {
+        vehicleex_per_tile(vehicle, false);
         if (!vehicle_update_track_motion_backwards_get_new_track(vehicle, trackType, ride, rideEntry, (uint16 *)&regs.ax)) {
             goto loc_6DBE5E;
         }
