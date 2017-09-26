@@ -14,7 +14,7 @@ void peepex_make_witness(rct_peep *peep, uint16 sprite)
 {
     log_warning("witness");
 
-    peep->state = PEEP_STATE_WITNESSING_EVENT;
+    peep->state = PEEP_STATE_EX_WITNESSING_EVENT;
     peep->peepex_follow_target = sprite;
     peep->peepex_event_countdown = 3 + scenario_rand_max(16);
 
@@ -108,7 +108,7 @@ void peepex_make_hamelin(rct_peep *peep, rct_peep *hamelin)
 {
     log_warning("hamelin");
 
-    peep->state = PEEP_STATE_FOLLOWING_HAMELIN;
+    peep->state = PEEP_STATE_EX_FOLLOWING_HAMELIN;
     peep->peepex_follow_target = hamelin->sprite_index;
     peep->peepex_hamelin_countdown = 10 + scenario_rand_max(128);
     peep->peepex_interest_in_entertainers = ((uint16)(peep->peepex_interest_in_entertainers) * 0xFF) * scenario_rand_max(0xFF);
@@ -291,13 +291,13 @@ void peepex_update_security_chasing(rct_peep *peep)
     }
 
     if (!stopFollowing) {
-        if (target_peep->state != PEEP_STATE_ESCORTED_BY_STAFF &&
+        if (target_peep->state != PEEP_STATE_EX_ESCORTED_BY_STAFF &&
             !(target_peep->flags & PEEP_FLAGS_LEAVING_PARK)) {
             if (closeEnoughForArrest) {
                 log_warning("Book 'em...");
                 peep->peepex_arrest_countdown   = 10 + scenario_rand_max(0x32);
                 target_peep->peepex_follow_target = peep->sprite_index;
-                target_peep->state = PEEP_STATE_ESCORTED_BY_STAFF;
+                target_peep->state = PEEP_STATE_EX_ESCORTED_BY_STAFF;
                 peep_leave_park(target_peep);
             }
         }
@@ -314,7 +314,7 @@ void peepex_update_security_chasing(rct_peep *peep)
         if (peep->peepex_arrest_countdown > 0 && gScenarioTicks % 11 == 0) {
             peep->peepex_arrest_countdown -= 1;
             if (peep->peepex_arrest_countdown <= 1) {
-                peep->state = PEEP_STATE_SECURITY_ESCORTING_OUT;
+                peep->state = PEEP_STATE_EX_SECURITY_ESCORTING_OUT;
             }
         }
     }
@@ -357,8 +357,8 @@ void peepex_update_escorted_by_staff(rct_peep *peep)
                     // Apprently we've been arrested!
                 arrested    = true;
 
-                if (target_peep->state != PEEP_STATE_SECURITY_CHASING &&
-                    target_peep->state != PEEP_STATE_SECURITY_ESCORTING_OUT) {
+                if (target_peep->state != PEEP_STATE_EX_SECURITY_CHASING &&
+                    target_peep->state != PEEP_STATE_EX_SECURITY_ESCORTING_OUT) {
                     stopFollowing = true;
                 }
             }
@@ -382,7 +382,7 @@ void peepex_update_escorted_by_staff(rct_peep *peep)
                 invalidate_sprite_2((rct_sprite*)peep);
             }
 
-            if (arrested && target_peep->state == PEEP_STATE_SECURITY_CHASING) {
+            if (arrested && target_peep->state == PEEP_STATE_EX_SECURITY_CHASING) {
                     // Pick from a variety of unhappy reactions
                 if (peep->action >= PEEP_ACTION_NONE_1 && (gScenarioTicks + peep->id) % 11 == 0) {
                     peep->sprite_direction = instr.out_facing_direction * 8;

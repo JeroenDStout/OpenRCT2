@@ -6735,11 +6735,11 @@ static void peep_update(rct_peep *peep)
 	}
 
         // If we are chasing a peep, go very fast
-    if (peep->state == PEEP_STATE_SECURITY_CHASING) {
+    if (peep->state == PEEP_STATE_EX_SECURITY_CHASING) {
         stepsToTake = 200;
     }
-    else if (peep->state == PEEP_STATE_SECURITY_ESCORTING_OUT ||
-             peep->state == PEEP_STATE_ESCORTED_BY_STAFF) {
+    else if (peep->state == PEEP_STATE_EX_SECURITY_ESCORTING_OUT ||
+             peep->state == PEEP_STATE_EX_ESCORTED_BY_STAFF) {
         stepsToTake = 100;
     }
 
@@ -6822,19 +6822,19 @@ static void peep_update(rct_peep *peep)
         case PEEP_STATE_INSPECTING:
             peep_update_fixing(stepsToTake, peep);
             break;
-        case PEEP_STATE_FOLLOWING_HAMELIN:
+        case PEEP_STATE_EX_FOLLOWING_HAMELIN:
             peepex_update_hamelin(peep);
             break;
-        case PEEP_STATE_WITNESSING_EVENT:
+        case PEEP_STATE_EX_WITNESSING_EVENT:
             peepex_update_witness(peep);
             break;
-        case PEEP_STATE_ESCORTED_BY_STAFF:
+        case PEEP_STATE_EX_ESCORTED_BY_STAFF:
             peepex_update_escorted_by_staff(peep);
             break;
-        case PEEP_STATE_SECURITY_CHASING:
+        case PEEP_STATE_EX_SECURITY_CHASING:
             peepex_update_security_chasing(peep);
             break;
-        case PEEP_STATE_SECURITY_ESCORTING_OUT:
+        case PEEP_STATE_EX_SECURITY_ESCORTING_OUT:
             peepex_update_security_escorting_out(peep);
             break;
             //There shouldn't be any more
