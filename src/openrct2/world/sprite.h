@@ -439,6 +439,7 @@ void litter_remove_at(sint32 x, sint32 y, sint32 z);
 void sprite_misc_explosion_cloud_create(sint32 x, sint32 y, sint32 z);
 void sprite_misc_explosion_flare_create(sint32 x, sint32 y, sint32 z);
 uint16 sprite_get_first_in_quadrant(sint32 x, sint32 y);
+uint32 sprite_get_first_in_multiple_quadrants(sint32 minX, sint32 minY, sint32 maxX, sint32 maxY, uint16 *buffer, uint32 maxCount);
 void sprite_position_tween_store_a();
 void sprite_position_tween_store_b();
 void sprite_position_tween_all(float nudge);

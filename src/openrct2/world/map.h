@@ -163,6 +163,7 @@ enum {
 };
 
 enum {
+    MAP_ELEMENT_FLAG_TEMPORARILY_BLOCKED = (1 << 6),
     MAP_ELEMENT_FLAG_GHOST = (1 << 4),
     MAP_ELEMENT_FLAG_BROKEN = (1 << 5),
     MAP_ELEMENT_FLAG_BLOCK_BRAKE_CLOSED = (1 << 5),
@@ -459,6 +460,7 @@ sint32 map_height_from_slope(sint32 x, sint32 y, sint32 slope);
 rct_map_element* map_get_banner_element_at(sint32 x, sint32 y, sint32 z, uint8 direction);
 rct_map_element *map_get_surface_element_at(sint32 x, sint32 y);
 rct_map_element* map_get_path_element_at(sint32 x, sint32 y, sint32 z);
+rct_map_element* map_get_path_element_below_or_at(sint32 x, sint32 y, sint32 z);
 rct_map_element *map_get_wall_element_at(sint32 x, sint32 y, sint32 z, sint32 direction);
 rct_map_element *map_get_small_scenery_element_at(sint32 x, sint32 y, sint32 z, sint32 type, uint8 quadrant);
 rct_map_element *map_get_park_entrance_element_at(sint32 x, sint32 y, sint32 z, bool ghost);

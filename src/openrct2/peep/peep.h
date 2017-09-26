@@ -206,7 +206,12 @@ enum PEEP_STATE {
     PEEP_STATE_USING_BIN = 20,
     PEEP_STATE_WATERING = 21,
     PEEP_STATE_HEADING_TO_INSPECTION = 22,
-    PEEP_STATE_INSPECTING = 23
+    PEEP_STATE_INSPECTING = 23,
+    PEEP_STATE_FOLLOWING_HAMELIN = 24,
+    PEEP_STATE_SECURITY_CHASING = 25,
+    PEEP_STATE_SECURITY_ESCORTING_OUT = 26,
+    PEEP_STATE_ESCORTED_BY_STAFF = 27,
+    PEEP_STATE_WITNESSING_EVENT = 28
 };
 
 enum PEEP_ACTION_EVENTS {
@@ -483,7 +488,9 @@ typedef struct rct_peep {
     sint16 sprite_right;            // 0x1A
     sint16 sprite_bottom;           // 0x1C
     uint8 sprite_direction;         // 0x1E
-    uint8 pad_1F[3];
+	uint8 peepex_direction_preference;  // 0x1f
+	uint8 peepex_queue_wait_distance;   // 0x20
+	uint8 peepex_crowded_store;         // 0x21
     rct_string_id name_string_idx;  // 0x22
     uint16 next_x;                  // 0x24
     uint16 next_y;                  // 0x26
@@ -524,7 +531,14 @@ typedef struct rct_peep {
     uint8 photo2_ride_ref;          // 0x5C
     uint8 photo3_ride_ref;          // 0x5D
     uint8 photo4_ride_ref;          // 0x5E
-    uint8 pad_5F[0x09];             // 0x5F
+    union {
+        uint8 peepex_hamelin_countdown; // 0x5F
+        uint8 peepex_arrest_countdown;
+    };
+    uint16 peepex_follow_target;    // 0x60
+    uint8 peepex_interest_in_entertainers; // 0x61
+    uint8 peepex_event_countdown;   // 0x62
+    uint8 pad_63[0x04];             // 0x63
     uint8 current_ride;             // 0x68
     uint8 current_ride_station;     // 0x69
     uint8 current_train;            // 0x6A
@@ -553,13 +567,16 @@ typedef struct rct_peep {
         uint16 next_in_queue;       // 0x74
     };
     uint8 var_76;
-    uint8 pad_77;
+    uint8 peepex_wide_path_blocker;
     union{
         uint8 maze_last_edge;           // 0x78
         uint8 direction;    //Direction ?
     };
     uint8 interaction_ride_index;
-    uint16 time_in_queue;           // 0x7A
+    union {
+        uint16 time_in_queue;           // 0x7A
+        uint16 peepex_following_flags;
+    };
     uint8 rides_been_on[32];        // 0x7C
     // 255 bit bitmap of every ride the peep has been on see
     // window_peep_rides_update for how to use.
@@ -626,7 +643,7 @@ typedef struct rct_peep {
     uint8 hat_colour;               // 0xF8
     uint8 favourite_ride;           // 0xF9
     uint8 favourite_ride_rating;    // 0xFA
-    uint8 pad_FB;
+    uint8 peepex_path_limits;
     uint32 item_standard_flags;     // 0xFC
 } rct_peep;
 assert_struct_size(rct_peep, 0x100);
@@ -725,11 +742,13 @@ rct_peep * try_get_guest(uint16 spriteIndex);
 sint32 peep_get_staff_count();
 sint32 peep_can_be_picked_up(rct_peep* peep);
 void peep_update_all();
+sint32 peep_update_action(sint16* x, sint16* y, sint16* xy_distance, rct_peep* peep);
 void peep_problem_warnings_update();
 void peep_stop_crowd_noise();
 void peep_update_crowd_noise();
 void peep_update_days_in_queue();
 void peep_applause();
+sint32 peep_get_height_on_slope(rct_peep *peep, sint32 x, sint32 y);
 rct_peep *peep_generate(sint32 x, sint32 y, sint32 z);
 void get_arguments_from_action(rct_peep* peep, uint32 *argument_1, uint32* argument_2);
 void peep_thought_set_format_args(rct_peep_thought *thought);
@@ -748,6 +767,11 @@ void game_command_pickup_guest(sint32* eax, sint32* ebx, sint32* ecx, sint32* ed
 void peep_sprite_remove(rct_peep* peep);
 void peep_remove(rct_peep* peep);
 void peep_update_sprite_type(rct_peep* peep);
+void peep_leave_park(rct_peep* peep);
+sint32 guest_path_find_aimless(rct_peep* peep, uint8 edges);
+sint32 guest_surface_path_finding(rct_peep* peep);
+sint32 peep_move_one_tile(uint8 direction, rct_peep* peep);
+uint8 get_nearest_park_entrance_index(uint16 x, uint16 y); // TODO: put in more appropriate file
 
 void peep_window_state_update(rct_peep* peep);
 void peep_decrement_num_riders(rct_peep* peep);
@@ -768,6 +792,7 @@ void peep_switch_to_special_sprite(rct_peep* peep, uint8 special_sprite_id);
 void peep_update_name_sort(rct_peep *peep);
 void peep_sort();
 void peep_update_names(bool realNames);
+rct_map_element* get_banner_on_path(rct_map_element *path_element); // this shouldn't be here, but the function was originally in peep.c
 
 money32 set_peep_name(sint32 flags, sint32 state, uint16 sprite_index, uint8* text_1, uint8* text_2, uint8* text_3);
 void game_command_set_guest_name(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *edx, sint32 *esi, sint32 *edi, sint32 *ebp);

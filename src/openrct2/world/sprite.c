@@ -69,6 +69,27 @@ uint16 sprite_get_first_in_quadrant(sint32 x, sint32 y)
     return gSpriteSpatialIndex[offset];
 }
 
+uint32 sprite_get_first_in_multiple_quadrants(sint32 minX, sint32 minY, sint32 maxX, sint32 maxY, uint16 *buffer, uint32 maxCount)
+{
+    if (maxCount == 0)
+        return 0;
+
+    uint32 countRead = 0;
+
+    for (sint32 x = minX; x <= maxX; x += 32) {
+        for (sint32 y = minY; y <= maxY; y += 32) {
+            buffer[countRead] = sprite_get_first_in_quadrant(x, y);
+            if (buffer[countRead] == SPRITE_INDEX_NULL)
+                continue;
+            countRead += 1;
+            if (countRead > maxCount)
+                return countRead;
+        }
+    }
+    
+    return countRead;
+}
+
 static void invalidate_sprite_max_zoom(rct_sprite *sprite, sint32 maxZoom)
 {
     if (sprite->unknown.sprite_left == SPRITE_LOCATION_NULL) return;
