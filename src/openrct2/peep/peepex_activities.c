@@ -48,7 +48,7 @@ void peepex_update_witness(rct_peep *peep)
             stopFollowing = true;
         }
         
-        closeEnoughForReact     = instr.out_comfortable_position;
+        closeEnoughForReact     = (instr.out_effective_distance < instr.attempt_max_distance) && instr.out_comfortable_position;
     }
 
     if (!stopFollowing) {
@@ -157,7 +157,7 @@ void peepex_update_hamelin(rct_peep *peep)
             stopFollowing = true;
         }
         
-        closeEnoughForCheer     = instr.out_comfortable_position;
+        closeEnoughForCheer     = (instr.out_effective_distance < instr.attempt_max_distance) && instr.out_comfortable_position;
     }
 
     if (!stopFollowing) {
