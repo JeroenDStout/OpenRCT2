@@ -698,6 +698,9 @@ void path_paint(paint_session * session, uint8 direction, uint16 height, rct_map
         session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
         imageFlags = construction_markers[gConfigGeneral.construction_marker_colour];
     }
+    if (map_element->flags & MAP_ELEMENT_FLAG_TEMPORARILY_BLOCKED) {
+        imageFlags = COLOUR_BRIGHT_GREEN << 19 | COLOUR_GREY << 24 | IMAGE_TYPE_REMAP;
+    }
 
     sint16 x = session->MapPosition.x, y = session->MapPosition.y;
 
