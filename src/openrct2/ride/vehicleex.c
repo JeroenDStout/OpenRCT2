@@ -3,12 +3,19 @@
 #include "../world/sprite.h"
 #include "../ride/track.h"
 #include "../audio/audio.h"
+#include "../config/config.h"
+#include "../peep/peepex.h"
 
 void vehicleex_per_tile(rct_vehicle *vehicle, bool forwards)
 {
     vehicleex_update_crossings(vehicle, forwards);
 
-
+    if (gConfigPeepEx.enable_hamelin_entertainer) {
+        peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
+        e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VEHICLE;
+        e.primary_vehicle   = vehicle;
+        peepex_broadcast_event(&e);
+    }
 }
 
 void vehicleex_update_crossings(rct_vehicle* vehicle, bool travellingForwards)

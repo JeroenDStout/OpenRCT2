@@ -186,6 +186,8 @@ peepex_event_broadcast_instr create_peepex_event_broadcast_instr()
 
     instr.broadcast_type    = PEEPEX_BROADCAST_EVENT_NONE;
     instr.broadcast_mode    = PEEPEX_BROADCAST_MODE_NORMAL;
+    instr.primary_peep      = 0;
+    instr.primary_vehicle   = 0;
 
     return instr;
 }
@@ -246,6 +248,11 @@ void peepex_broadcast_show_sprite_hint(peepex_event_broadcast_instr *instr)
         location.x = instr->primary_peep->x;
         location.y = instr->primary_peep->y;
         location.z = instr->primary_peep->z;
+    }
+    else if (instr->primary_vehicle) {
+        location.x = instr->primary_vehicle->x;
+        location.y = instr->primary_vehicle->y;
+        location.z = instr->primary_vehicle->z;
     }
     else {
         return;

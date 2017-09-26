@@ -55,9 +55,10 @@ typedef struct peepex_pathing_hint_instr {
 } peepex_pathing_hint_instr;
 
 typedef struct peepex_event_broadcast_instr {
-    uint8     broadcast_type;
-    uint8     broadcast_mode;
-    rct_peep* primary_peep;
+    uint8           broadcast_type;
+    uint8           broadcast_mode;
+    rct_peep*       primary_peep;
+    rct_vehicle*    primary_vehicle;
 } peepex_event_broadcast_instr;
 peepex_event_broadcast_instr create_peepex_event_broadcast_instr();
 
@@ -79,7 +80,8 @@ enum {
     PEEPEX_BROADCAST_EVENT_HAMELIN_DISPLAY,
     PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE,
     PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_VISUAL,
-    PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_AUDIO
+    PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_AUDIO,
+    PEEPEX_BROADCAST_EVENT_GENERIC_VEHICLE
 };
 
 enum {
