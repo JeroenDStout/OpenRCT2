@@ -17,9 +17,11 @@ void peepex_make_witness(rct_peep *peep, uint16 sprite)
     peep->state = PEEP_STATE_EX_WITNESSING_EVENT;
     peep->peepex_follow_target = sprite;
     peep->peepex_event_countdown = 3 + scenario_rand_max(16);
+    peep->peepex_interest_in_misc = (peep->peepex_interest_in_misc & 0xF0) | (((peep->peepex_interest_in_misc & 0x0F) * scenario_rand_max(18)) >> 4);
 
     if (peep->type == PEEP_TYPE_STAFF) {
-        peep->peepex_event_countdown   = 3;
+        peep->peepex_event_countdown      = 10;
+        peep->peepex_interest_in_misc     = 0;
     }
 }
 
@@ -110,12 +112,12 @@ void peepex_make_hamelin(rct_peep *peep, rct_peep *hamelin)
 
     peep->state = PEEP_STATE_EX_FOLLOWING_HAMELIN;
     peep->peepex_follow_target = hamelin->sprite_index;
-    peep->peepex_hamelin_countdown = 10 + scenario_rand_max(128);
-    peep->peepex_interest_in_entertainers = ((uint16)(peep->peepex_interest_in_entertainers) * 0xFF) * scenario_rand_max(0xFF);
+    peep->peepex_event_countdown = 10 + scenario_rand_max(128);
+    peep->peepex_interest_in_misc = (peep->peepex_interest_in_misc & 0x0F) | (((peep->peepex_interest_in_misc >> 4) * scenario_rand_max(18)) & 0xF0);
 
     if (peep->type == PEEP_TYPE_STAFF) {
-        peep->peepex_hamelin_countdown          = 10;
-        peep->peepex_interest_in_entertainers   = 0;
+        peep->peepex_event_countdown      = 10;
+        peep->peepex_interest_in_misc     = 0;
     }
 }
 
@@ -235,24 +237,17 @@ void peepex_update_hamelin(rct_peep *peep)
 
             // Tick us down until we lose interest in this peep
         if (gScenarioTicks % 11 == 0) {
-            if (peep->peepex_hamelin_countdown == 0)
+            if (peep->peepex_event_countdown == 0)
                 stopFollowing = true;
-            peep->peepex_hamelin_countdown -= 1;
+            else
+                peep->peepex_event_countdown -= 1;
         }
     }
 
         // It is over, move along
     if (stopFollowing) {
         log_warning("Hamelin release");
-
         peepex_return_to_walking(peep);
-        if (peep->type == PEEP_TYPE_GUEST)
-            peep->peepex_hamelin_countdown = 5 + scenario_rand_max(64);
-        else
-            peep->peepex_hamelin_countdown = 128;
-        peep->state = PEEP_STATE_WALKING;
-        peep->peepex_follow_target = 0;
-        peep->peepex_hamelin_countdown = 5 + scenario_rand_max(64);
     }
 }
 
@@ -295,7 +290,7 @@ void peepex_update_security_chasing(rct_peep *peep)
             !(target_peep->flags & PEEP_FLAGS_LEAVING_PARK)) {
             if (closeEnoughForArrest) {
                 log_warning("Book 'em...");
-                peep->peepex_arrest_countdown   = 10 + scenario_rand_max(0x32);
+                peep->peepex_event_countdown   = 10 + scenario_rand_max(0x32);
                 target_peep->peepex_follow_target = peep->sprite_index;
                 target_peep->state = PEEP_STATE_EX_ESCORTED_BY_STAFF;
                 peep_leave_park(target_peep);
@@ -311,9 +306,9 @@ void peepex_update_security_chasing(rct_peep *peep)
             }
         }
             // Tick us down until we make a decision
-        if (peep->peepex_arrest_countdown > 0 && gScenarioTicks % 11 == 0) {
-            peep->peepex_arrest_countdown -= 1;
-            if (peep->peepex_arrest_countdown <= 1) {
+        if (peep->peepex_event_countdown > 0 && gScenarioTicks % 11 == 0) {
+            peep->peepex_event_countdown -= 1;
+            if (peep->peepex_event_countdown <= 1) {
                 peep->state = PEEP_STATE_EX_SECURITY_ESCORTING_OUT;
             }
         }
