@@ -71,7 +71,7 @@ bool peepex_update_walking_find_activity_hamelin(rct_peep *peep, uint16 sprite_i
         if (abs(otherPeep->z - peep->z) > 8)
             return false;
 
-        peep->state = PEEP_STATE_FOLLOWING_HAMELIN;
+        peep->state = PEEP_STATE_EX_FOLLOWING_HAMELIN;
         peep->peepex_follow_target = sprite_id;
         peep->peepex_hamelin_countdown = 10 + scenario_rand_max(128);
 
@@ -101,7 +101,7 @@ bool peepex_update_patrolling_find_activity(rct_peep *peep)
             continue;
 
             // THIS PEEP HAS BEEN FREE LONG ENOUGH, BOOK 'EM!
-        peep->state = PEEP_STATE_SECURITY_CHASING;
+        peep->state = PEEP_STATE_EX_SECURITY_CHASING;
         peep->peepex_follow_target = sprite_id;
         peep->destination_x = peep->x;
         peep->destination_y = peep->y;
