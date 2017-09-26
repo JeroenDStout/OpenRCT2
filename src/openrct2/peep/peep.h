@@ -531,12 +531,9 @@ typedef struct rct_peep {
     uint8 photo2_ride_ref;          // 0x5C
     uint8 photo3_ride_ref;          // 0x5D
     uint8 photo4_ride_ref;          // 0x5E
-    union {
-        uint8 peepex_hamelin_countdown; // 0x5F
-        uint8 peepex_arrest_countdown;
-    };
+    uint8 peepex_unused_0;          // 0x5F
     uint16 peepex_follow_target;    // 0x60
-    uint8 peepex_interest_in_entertainers; // 0x62
+    uint8 peepex_interest_in_misc;  // 0x62
     uint8 peepex_event_countdown;   // 0x63
     uint16 peepex_next_in_group;    // 0x64
     uint16 peepex_next_in_faction;  // 0x66
