@@ -30,7 +30,7 @@ void peepex_update_witness(rct_peep *peep)
     bool      stopFollowing         = false;
     bool      closeEnoughForReact   = false;
 
-    peepex_follow_instr instr;
+    peepex_follow_instr instr = create_peepex_follow_instr();
     instr.attempt_min_distance              = 10*10;
     instr.attempt_max_distance              = 64*64;
     instr.target_forward_offset             = 0;
@@ -206,6 +206,9 @@ void peepex_update_hamelin(rct_peep *peep)
                     peep->action_sprite_image_offset = 0;
                     peep_update_current_action_sprite_type(peep);
                     invalidate_sprite_2((rct_sprite*)peep);
+                    e.broadcast_type = PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_VISUAL;
+                    e.primary_peep   = peep;
+                    peepex_broadcast_event(&e);
                     break;
                 case 4:
                     invalidate_sprite_2((rct_sprite*)peep);
@@ -214,6 +217,9 @@ void peepex_update_hamelin(rct_peep *peep)
                     peep->action_sprite_image_offset = 0;
                     peep_update_current_action_sprite_type(peep);
                     invalidate_sprite_2((rct_sprite*)peep);
+                    e.broadcast_type = PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_VISUAL;
+                    e.primary_peep   = peep;
+                    peepex_broadcast_event(&e);
                     break;
                 case 5:
                     invalidate_sprite_2((rct_sprite*)peep);
@@ -227,7 +233,7 @@ void peepex_update_hamelin(rct_peep *peep)
                     laugh = scenario_rand() & 31;
                     if (laugh < 3)
                         audio_play_sound_at_location(SOUND_LAUGH_1 + laugh, peep->x, peep->y, peep->z);
-                    e.broadcast_type = PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE;
+                    e.broadcast_type = PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_AUDIO;
                     e.primary_peep   = peep;
                     peepex_broadcast_event(&e);
                     break;
@@ -287,7 +293,7 @@ void peepex_update_security_chasing(rct_peep *peep)
 
     if (!stopFollowing) {
         if (target_peep->state != PEEP_STATE_EX_ESCORTED_BY_STAFF &&
-            !(target_peep->flags & PEEP_FLAGS_LEAVING_PARK)) {
+            !(target_peep->peep_flags & PEEP_FLAGS_LEAVING_PARK)) {
             if (closeEnoughForArrest) {
                 log_warning("Book 'em...");
                 peep->peepex_event_countdown   = 10 + scenario_rand_max(0x32);

@@ -21,7 +21,7 @@
 
 enum {
     PEEPEX_FOLLOWING_FLAG_FREE_WALK     = 1 << 0,
-    PEEPEX_FOLLOWING_FLAG_NOSY          = 2 << 0        // the peep will be more persistent
+    PEEPEX_FOLLOWING_FLAG_NOSY          = 1 << 1        // the peep will be more persistent
 };
 
 typedef struct peepex_follow_instr {
@@ -77,14 +77,16 @@ enum {
     PEEPEX_BROADCAST_EVENT_GENERIC_VISUAL_ODDITY,
     PEEPEX_BROADCAST_EVENT_GENERIC_AUDIO_ODDITY,
     PEEPEX_BROADCAST_EVENT_HAMELIN_DISPLAY,
-    PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE
+    PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE,
+    PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_VISUAL,
+    PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_AUDIO
 };
 
 enum {
     PEEPEX_BROADCAST_MODE_NORMAL            = 0
 };
 
-void peepex_base_update(rct_peep *peep, sint32 index);
+void peepex_base_update(rct_peep *peep);
 void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint16 y_delta, sint16* xy_distance, rct_peep* peep);
 sint32 peep_update_queue_position_messy(rct_peep* peep, uint8 previous_action);
 sint32 peep_move_one_tile_messy(sint32 x, sint32 y, uint8 direction, rct_peep* peep);
@@ -98,7 +100,6 @@ bool peepex_check_peep_notice_thing(rct_peep *peep, rct_xyz16 direction, sint16 
 
     // update 
 bool peepex_update_walking_find_activity(rct_peep *peep);
-bool peepex_update_walking_find_activity_hamelin(rct_peep *peep, uint16 otherPeep);
 bool peepex_update_patrolling_find_activity(rct_peep *peep);
 
     // make do
@@ -111,7 +112,8 @@ void peepex_return_to_walking(rct_peep *peep);
 void peepex_broadcast_event(peepex_event_broadcast_instr*);
 void peepex_broadcast_event_generic_oddity(peepex_event_broadcast_instr*, bool visual, bool audio);
 void peepex_broadcast_event_hamelin_display(peepex_event_broadcast_instr*);
-void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr*);
+void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr*, bool visual, bool audio);
+void peepex_broadcast_show_sprite_hint(peepex_event_broadcast_instr*);
 
     // new behaviours
 void peepex_update_witness(rct_peep *peep);
