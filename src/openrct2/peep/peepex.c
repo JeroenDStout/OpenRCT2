@@ -115,6 +115,20 @@ bool peepex_update_patrolling_find_activity(rct_peep *peep)
     return false;
 }
 
+bool peepex_use_advanced_walking(rct_peep *peep)
+{
+    switch (peep->state) {
+    case PEEP_STATE_WALKING:
+    case PEEP_STATE_PATROLLING:
+    case PEEP_STATE_EX_FOLLOWING_HAMELIN:
+    case PEEP_STATE_EX_SECURITY_CHASING:
+    case PEEP_STATE_EX_SECURITY_ESCORTING_OUT:
+    case PEEP_STATE_EX_WITNESSING_EVENT:
+        return true;
+    }
+    return false;
+}
+
 void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint16 y_delta, sint16* xy_distance, rct_peep* peep)
 {
 	int spriteDirection = 0;
@@ -176,10 +190,7 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
     sint16 peepExpectedNextX    = peep->x + actualStepX + sidestepX;
     sint16 peepExpectedNextY    = peep->y + actualStepY + sidestepY;
 	
-	if (peep->state == PEEP_STATE_WALKING ||
-        peep->state == PEEP_STATE_FOLLOWING_HAMELIN ||
-        peep->state == PEEP_STATE_SECURITY_CHASING)
-	{
+	if (peepex_use_advanced_walking(peep)) {
         const static sint32 peepFindRange           = 40;
 
 		const static sint32 checkDistance		    = 5;
