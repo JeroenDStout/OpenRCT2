@@ -19,6 +19,11 @@
 
 #include "peep.h"
 
+enum {
+    PEEPEX_FOLLOWING_FLAG_FREE_WALK     = 1 << 0,
+    PEEPEX_FOLLOWING_FLAG_NOSY          = 2 << 0        // the peep will be more persistent
+};
+
 typedef struct peepex_follow_instr {
     uint16    attempt_min_distance;
     uint16    attempt_max_distance;
