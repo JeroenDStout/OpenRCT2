@@ -13,8 +13,10 @@ const rct_xy16 peepex_directional[4] = {
     {  0, -2 }
 };
 
-void peepex_base_update(rct_peep *peep, sint32 index)
+void peepex_base_update(rct_peep *peep)
 {
+    peepex_update_interest(peep);
+
     //if (gScenarioTicks % 11 == 0) {
         //if (peep->peepex_event_countdown > 0)
         //    peep->peepex_event_countdown -= 1;
@@ -59,28 +61,6 @@ bool peepex_update_walking_find_activity(rct_peep *peep)
     return false;
 }
 
-bool peepex_update_walking_find_activity_hamelin(rct_peep *peep, uint16 sprite_id)
-{
-	rct_peep* otherPeep = (rct_peep*)get_sprite(sprite_id);
-
-    if (otherPeep->type == PEEP_TYPE_STAFF && otherPeep->staff_type == STAFF_TYPE_ENTERTAINER) {
-        if (abs(otherPeep->x - peep->x) > 90)
-            return false;
-        if (abs(otherPeep->y - peep->y) > 90)
-            return false;
-        if (abs(otherPeep->z - peep->z) > 8)
-            return false;
-
-        peep->state = PEEP_STATE_EX_FOLLOWING_HAMELIN;
-        peep->peepex_follow_target = sprite_id;
-        peep->peepex_hamelin_countdown = 10 + scenario_rand_max(128);
-
-        return true;
-    }
-
-    return true;
-}
-
 bool peepex_update_patrolling_find_activity(rct_peep *peep)
 {
     if (!gConfigPeepEx.enable_crime)
@@ -105,7 +85,7 @@ bool peepex_update_patrolling_find_activity(rct_peep *peep)
         peep->peepex_follow_target = sprite_id;
         peep->destination_x = peep->x;
         peep->destination_y = peep->y;
-        peep->peepex_arrest_countdown = 0;
+        peep->peepex_event_countdown = 0;
 
         log_warning("Chase 'em!");
 

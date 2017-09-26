@@ -23,9 +23,17 @@ void peepex_broadcast_event(peepex_event_broadcast_instr *instr)
         peepex_broadcast_event_hamelin_display(instr);
         break;
     case PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE:
-        peepex_broadcast_event_hamelin_snare(instr);
+        peepex_broadcast_event_hamelin_snare(instr, true, true);
+        break;
+    case PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_AUDIO:
+        peepex_broadcast_event_hamelin_snare(instr, true, false);
+        break;
+    case PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_VISUAL:
+        peepex_broadcast_event_hamelin_snare(instr, false, true);
         break;
     }
+
+    peepex_broadcast_show_sprite_hint(instr);
 }
 
 bool peepex_check_peep_notice_thing(rct_peep *peep, rct_xyz16 direction, sint16 distancePow, sint16 visualNear, uint16 visualOdds, sint16 audioNear, uint16 audioOdds)
@@ -128,7 +136,7 @@ void peepex_broadcast_event_hamelin_display(peepex_event_broadcast_instr *instr)
     }
 }
 
-void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr *instr)
+void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr *instr, bool visual, bool audio)
 {
     uint16 peepBuffer[256];
     rct_peep *curPeep = 0;
