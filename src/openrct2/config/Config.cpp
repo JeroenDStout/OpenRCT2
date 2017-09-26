@@ -489,6 +489,7 @@ namespace Config
             model->enable_buddies = reader->GetBoolean("enable_buddies", true);
             model->enable_hamelin_entertainer = reader->GetBoolean("enable_hamelin_entertainer", true);
             model->enable_rail_crossings = reader->GetBoolean("enable_rail_crossings", true);
+            model->enable_ride_watch = reader->GetBoolean("enable_ride_watch", true);
             model->enable_crime = reader->GetBoolean("enable_crime", true);
         }
     }
@@ -505,6 +506,7 @@ namespace Config
         writer->WriteBoolean("enable_buddies", model->enable_buddies);
         writer->WriteBoolean("enable_hamelin_entertainer", model->enable_hamelin_entertainer);
         writer->WriteBoolean("enable_rail_crossings", model->enable_rail_crossings);
+        writer->WriteBoolean("enable_ride_watch", model->enable_ride_watch);
         writer->WriteBoolean("enable_crime", model->enable_crime);
     }
 

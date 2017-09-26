@@ -145,6 +145,7 @@ typedef struct PeepExConfiguration
 	bool		enable_buddies;
     bool        enable_hamelin_entertainer;
     bool        enable_rail_crossings;
+    bool        enable_ride_watch;
     bool        enable_crime;
 } PeepExConfiguration;
 
