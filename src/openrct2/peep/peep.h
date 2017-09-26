@@ -574,10 +574,7 @@ typedef struct rct_peep {
         uint8 direction;    //Direction ?
     };
     uint8 interaction_ride_index;
-    union {
-        uint16 time_in_queue;           // 0x7A
-        uint16 peepex_following_flags;
-    };
+    uint16 time_in_queue;           // 0x7A
     uint8 rides_been_on[32];        // 0x7C
     // 255 bit bitmap of every ride the peep has been on see
     // window_peep_rides_update for how to use.
@@ -644,7 +641,7 @@ typedef struct rct_peep {
     uint8 hat_colour;               // 0xF8
     uint8 favourite_ride;           // 0xF9
     uint8 favourite_ride_rating;    // 0xFA
-    uint8 peepex_path_limits;
+    uint8 peepex_following_flags;   // 0xFB
     uint32 item_standard_flags;     // 0xFC
 } rct_peep;
 assert_struct_size(rct_peep, 0x100);

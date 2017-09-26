@@ -288,7 +288,7 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 		if (mapElement && map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_PATH) {
 			sint32 tileLimits = 12;
 
-			sint32 edges = mapElement->properties.path.edges & peep->peepex_path_limits;
+			sint32 edges = mapElement->properties.path.edges;// & peep->peepex_path_limits;
 			if ((peep->x & 0x1F) < tileLimits && !(edges & 0x1))
 				peepEdgeLimits &= ~0x1;
 			if ((peep->y & 0x1F) > (32-tileLimits) && !(edges & 0x2))
@@ -643,7 +643,7 @@ sint32 peep_move_one_tile_messy(sint32 x, sint32 y, uint8 direction, rct_peep* p
 		edges &= nextEdges;
     }
 
-	peep->peepex_path_limits = edges;
+	//peep->peepex_path_limits = edges;
 
 	if (peep->state == PEEP_STATE_WALKING) {
 		sint16 enterOffsetX = 0;
