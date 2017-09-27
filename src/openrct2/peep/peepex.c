@@ -264,7 +264,7 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 		
 		sint32 peepEdgeLimits = 0xF;
 
-		rct_map_element *mapElement = map_get_path_element_at(peep->next_x / 32, peep->next_y / 32, peep->next_z);
+		rct_map_element *mapElement = map_get_path_element_below_or_at(peep->x / 32, peep->y / 32, peep->z / 32);
 		if (mapElement && map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_PATH) {
 			sint32 tileLimits = 12;
 
@@ -334,7 +334,7 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
                 actualStepX -= (0 < actualStepX) - (actualStepX < 0);
         }
 
-	    mapElement = map_get_path_element_at(peep->destination_x / 32, peep->destination_y / 32, peep->z >> 3);
+	    mapElement = map_get_path_element_below_or_at(peep->destination_x / 32, peep->destination_y / 32, peep->z >> 3);
 	    if (mapElement) {
             if (mapElement->flags & MAP_ELEMENT_FLAG_TEMPORARILY_BLOCKED) {
 	            mapElement = map_get_path_element_at(peep->x / 32, peep->y / 32, peep->z >> 3);
