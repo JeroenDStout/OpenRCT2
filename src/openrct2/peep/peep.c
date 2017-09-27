@@ -902,8 +902,6 @@ static const uint8 peep_extra_item_containers[] = {
  */
 static void sub_68F41A(rct_peep *peep, sint32 index)
 {
-    peepex_base_update(peep);
-
     if (peep->type == PEEP_TYPE_STAFF){
         if (peep->staff_type != STAFF_TYPE_SECURITY)
             return;
@@ -6719,6 +6717,8 @@ static void peep_update_thoughts(rct_peep* peep){
  */
 static void peep_update(rct_peep *peep)
 {
+    peepex_base_update(peep);
+
     if (peep->type == PEEP_TYPE_GUEST) {
         if (peep->previous_ride != 255)
             if (++peep->previous_ride_time_out >= 720)
