@@ -24,11 +24,6 @@ void peepex_base_update(rct_peep *peep)
 {
     peepex_update_interest(peep);
 
-    //if (gScenarioTicks % 11 == 0) {
-        //if (peep->peepex_event_countdown > 0)
-        //    peep->peepex_event_countdown -= 1;
-    //}
-
 		// If guests are idly walking and they have spent a lot of time here, make them always leave.
 
 	if (gConfigPeepEx.guest_max_time_in_park > 0 && peep->state == PEEP_STATE_WALKING) {
@@ -40,6 +35,15 @@ void peepex_base_update(rct_peep *peep)
 		    }
         }
 	}
+    
+    switch (peep->state) {
+    case PEEP_STATE_EX_FOLLOWING_HAMELIN:
+        peepex_update_hamelin_cont(peep);
+        break;
+    case PEEP_STATE_EX_WATCHING_RIDE:
+        peepex_update_watching_ride_cont(peep);
+        break;
+    };
 }
 
 bool peepex_update_walking_find_activity(rct_peep *peep)
