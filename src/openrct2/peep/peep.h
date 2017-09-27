@@ -211,7 +211,8 @@ enum PEEP_STATE {
     PEEP_STATE_EX_SECURITY_CHASING = 25,
     PEEP_STATE_EX_SECURITY_ESCORTING_OUT = 26,
     PEEP_STATE_EX_ESCORTED_BY_STAFF = 27,
-    PEEP_STATE_EX_WITNESSING_EVENT = 28
+    PEEP_STATE_EX_WITNESSING_EVENT = 28,
+    PEEP_STATE_EX_WATCHING_RIDE = 29
 };
 
 enum PEEP_ACTION_EVENTS {
@@ -531,15 +532,23 @@ typedef struct rct_peep {
     uint8 photo2_ride_ref;          // 0x5C
     uint8 photo3_ride_ref;          // 0x5D
     uint8 photo4_ride_ref;          // 0x5E
-    uint8 peepex_interest_in_rides_and_crime; // 0x5F
+    uint8 peepex_interest_in_rides; // 0x5F
     uint16 peepex_follow_target;    // 0x60
     uint8 peepex_interest_in_misc;  // 0x62
     uint8 peepex_event_countdown;   // 0x63
     uint16 peepex_next_in_group;    // 0x64
     uint16 peepex_remembered_peep;  // 0x66
-    uint8 current_ride;             // 0x68
-    uint8 current_ride_station;     // 0x69
-    uint8 current_train;            // 0x6A
+    union {
+        uint8 current_ride;             // 0x68
+        uint8 peepex_ride;
+    };
+    union {
+        struct {
+            uint8 current_ride_station;     // 0x69
+            uint8 current_train;            // 0x6A
+        };
+        rct_xy8 peepex_interest_location;
+    };
     union{
         struct{
             uint8 current_car;      // 0x6B
@@ -565,7 +574,10 @@ typedef struct rct_peep {
         uint16 next_in_queue;       // 0x74
     };
     uint8 var_76;
-    uint8 peepex_wide_path_blocker;
+    union {
+        uint8 peepex_wide_path_blocker;
+        uint8 peepex_vehicle_excitement;
+    };
     union{
         uint8 maze_last_edge;           // 0x78
         uint8 direction;    //Direction ?
@@ -583,7 +595,10 @@ typedef struct rct_peep {
     uint8 previous_ride;            // 0xAD
     uint16 previous_ride_time_out;  // 0xAE
     rct_peep_thought thoughts[PEEP_MAX_THOUGHTS];   // 0xB0
-    uint8 var_C4;                   // 0xC4 has something to do with peep falling, see peep.checkForPath
+    union {
+        uint8 var_C4;                   // 0xC4 has something to do with peep falling, see peep.checkForPath
+        uint8 peepex_flags_tmp;
+    };
     union {
         uint8 staff_id;                     // 0xC5
         uint8 guest_heading_to_ride_id;     // 0xC5
@@ -638,7 +653,7 @@ typedef struct rct_peep {
     uint8 hat_colour;               // 0xF8
     uint8 favourite_ride;           // 0xF9
     uint8 favourite_ride_rating;    // 0xFA
-    uint8 peepex_following_flags;   // 0xFB
+    uint8 peepex_flags_consistent;  // 0xFB
     uint32 item_standard_flags;     // 0xFC
 } rct_peep;
 assert_struct_size(rct_peep, 0x100);
