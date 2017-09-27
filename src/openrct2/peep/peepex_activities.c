@@ -12,12 +12,13 @@
 
 void peepex_make_witness(rct_peep *peep, uint16 sprite)
 {
-    log_warning("witness");
+    //log_warning("witness");
 
     peep->state = PEEP_STATE_EX_WITNESSING_EVENT;
     peep->peepex_follow_target = sprite;
     peep->peepex_event_countdown = 3 + scenario_rand_max(16);
     peep->peepex_interest_in_misc = (peep->peepex_interest_in_misc & 0xF0) | (((peep->peepex_interest_in_misc & 0x0F) * scenario_rand_max(18)) >> 4);
+    peepex_send_peep_to_self(peep);
 
     if (peep->type == PEEP_TYPE_STAFF) {
         peep->peepex_event_countdown      = 10;
@@ -30,6 +31,11 @@ void peepex_update_witness(rct_peep *peep)
     bool      stopFollowing         = false;
     bool      closeEnoughForReact   = false;
 
+	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
+    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
+        stopFollowing = true;
+    }
+
     peepex_follow_instr instr = create_peepex_follow_instr();
     instr.attempt_min_distance              = 10*10;
     instr.attempt_max_distance              = 64*64;
@@ -37,11 +43,7 @@ void peepex_update_witness(rct_peep *peep)
     instr.out_facing_direction              = 0;
     instr.crowd_weight_in_percent           = 100;
     instr.base_gradient_weight_in_percent   = 0;
-
-	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
-    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
-        stopFollowing = true;
-    }
+    instr.target_peep                       = (rct_peep*)sprite;
 
     if (!stopFollowing) {
         peepex_update_following(peep, &instr);
@@ -82,13 +84,6 @@ void peepex_update_witness(rct_peep *peep)
                 };
             }
         }
-
-            // Tick us down until we lose interest in this event
-        if (gScenarioTicks % 11 == 0) {
-            if (peep->peepex_event_countdown == 0)
-                stopFollowing = true;
-            peep->peepex_event_countdown -= 1;
-        }
     }
 
         // It is over, move along
@@ -108,16 +103,25 @@ void peepex_update_witness(rct_peep *peep)
 
 void peepex_make_hamelin(rct_peep *peep, rct_peep *hamelin)
 {
-    log_warning("hamelin");
+    //log_warning("hamelin");
 
     peep->state = PEEP_STATE_EX_FOLLOWING_HAMELIN;
     peep->peepex_follow_target = hamelin->sprite_index;
-    peep->peepex_event_countdown = 10 + scenario_rand_max(128);
+    peep->peepex_event_countdown = 4 + scenario_rand_max(32);
     peep->peepex_interest_in_misc = (peep->peepex_interest_in_misc & 0x0F) | (((peep->peepex_interest_in_misc >> 4) * scenario_rand_max(18)) & 0xF0);
+    peepex_send_peep_to_self(peep);
 
     if (peep->type == PEEP_TYPE_STAFF) {
         peep->peepex_event_countdown      = 10;
         peep->peepex_interest_in_misc     = 0;
+    }
+}
+
+void peepex_update_hamelin_cont(rct_peep *peep)
+{
+    if (gScenarioTicks % 20 == 0) {
+        if (peep->peepex_event_countdown > 0)
+            peep->peepex_event_countdown -= 1;
     }
 }
 
@@ -128,24 +132,28 @@ void peepex_update_hamelin(rct_peep *peep)
     bool      closeEnoughForCheer   = false;
     bool      peepHasBeenChosen     = false;
 
-    peepex_follow_instr instr;
+	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
+    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
+        stopFollowing = true;
+    }
+    
+    peepex_follow_instr instr = create_peepex_follow_instr();
     instr.attempt_min_distance              = 20*20;
     instr.attempt_max_distance              = 64*64;
     instr.target_forward_offset             = 32;
     instr.out_facing_direction              = 0;
     instr.crowd_weight_in_percent           = 100;
     instr.base_gradient_weight_in_percent   = 100;
+    instr.target_peep                       = (rct_peep*)sprite;
 
-	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
-    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
+    if (peep->peepex_event_countdown == 0)
         stopFollowing = true;
-    }
 
     if (!stopFollowing) {
 	    target_peep = (rct_peep*)sprite;
 
             // We are the chosen one!
-        if (target_peep->peepex_following_flags == peep->id) {
+        if (target_peep->peepex_follow_target == peep->id) {
             instr.attempt_min_distance      = 4*4;
             instr.attempt_max_distance      = 12*12;
             instr.target_forward_offset     = 24;
@@ -166,7 +174,7 @@ void peepex_update_hamelin(rct_peep *peep)
         if (closeEnoughForCheer) {
             if (((gScenarioTicks + target_peep->id) % 100) == 0) {
                 if (scenario_rand_max(16) == 0)
-                    target_peep->peepex_following_flags = peep->id;
+                    target_peep->peepex_follow_target = peep->id;
             }
 
                 // Put us at rest
@@ -240,13 +248,15 @@ void peepex_update_hamelin(rct_peep *peep)
                 };
             }
         }
+    }
 
-            // Tick us down until we lose interest in this peep
-        if (gScenarioTicks % 11 == 0) {
-            if (peep->peepex_event_countdown == 0)
-                stopFollowing = true;
-            else
-                peep->peepex_event_countdown -= 1;
+        // It is over, move along
+    if (stopFollowing) {
+        //log_warning("Hamelin release");
+        peepex_return_to_walking(peep);
+    }
+}
+
     /*  Watching rides
      */
 
@@ -488,7 +498,7 @@ void peepex_update_watching_ride(rct_peep *peep)
     }
 }
 
-    /*  
+    /*  Guard things
      */
 
 void peepex_update_security_chasing(rct_peep *peep)
@@ -497,18 +507,19 @@ void peepex_update_security_chasing(rct_peep *peep)
 	rct_peep* target_peep           = 0;
     bool      closeEnoughForArrest  = false;
 
-    peepex_follow_instr instr;
+	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
+    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
+        stopFollowing = true;
+    }
+    
+    peepex_follow_instr instr = create_peepex_follow_instr();
     instr.attempt_min_distance              = 8*8;
     instr.attempt_max_distance              = 8*8;
     instr.target_forward_offset             = 16;
     instr.out_facing_direction              = 0;
     instr.crowd_weight_in_percent           = 100;
     instr.base_gradient_weight_in_percent   = 100;
-
-	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
-    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
-        stopFollowing = true;
-    }
+    instr.target_peep                       = (rct_peep*)sprite;
 
     if (!stopFollowing) {
 	    target_peep = (rct_peep*)sprite;
@@ -559,9 +570,6 @@ void peepex_update_security_chasing(rct_peep *peep)
     }
 }
 
-    /*  
-     */
-
 void peepex_update_escorted_by_staff(rct_peep *peep)
 {
     bool      stopFollowing         = false;
@@ -569,17 +577,18 @@ void peepex_update_escorted_by_staff(rct_peep *peep)
     bool      arrested              = false;
     bool      closeEnoughForActions = false;
 
-    peepex_follow_instr instr;
+	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
+    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
+        stopFollowing = true;
+    }
+    
+    peepex_follow_instr instr = create_peepex_follow_instr();
     instr.attempt_min_distance      = 8*8;
     instr.attempt_max_distance      = 8*8;
     instr.target_forward_offset     = 16;
     instr.out_facing_direction      = 0;
     instr.crowd_weight_in_percent   = 100;
-
-	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
-    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
-        stopFollowing = true;
-    }
+    instr.target_peep                       = (rct_peep*)sprite;
 
     if (!stopFollowing) {
 	    target_peep = (rct_peep*)sprite;
@@ -783,6 +792,9 @@ void peepex_update_security_escorting_out(rct_peep *peep)
 void peepex_return_to_walking(rct_peep *peep)
 {
     peep->peepex_follow_target = 0;
+    peep->peepex_event_countdown = 0;
+    peep->peepex_wide_path_blocker = 0;
+    peepex_send_peep_to_self(peep);
 
     peep->state = PEEP_STATE_WALKING;
     if (peep->type == PEEP_TYPE_STAFF) {
