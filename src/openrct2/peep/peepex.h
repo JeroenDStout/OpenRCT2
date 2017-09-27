@@ -39,6 +39,10 @@ typedef struct peepex_follow_instr {
     uint16    target_forward_offset;
     sint16    base_gradient_weight_in_percent;
     sint16    crowd_weight_in_percent;
+    sint16    moving_crowd_weight_in_percent;
+    sint16    min_tile_nearness;
+    rct_peep* target_peep;
+    rct_xyz16 target_fluid;
 
     bool      out_target_lost;
     bool      out_comfortable_position;

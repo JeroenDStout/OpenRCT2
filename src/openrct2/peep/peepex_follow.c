@@ -26,24 +26,29 @@ const rct_xy16 peepex_directional_offset[4] = {
 void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
 {
     instr->out_target_lost = false;
-
-        // For now check if our peep still exists (eventually may need functionality for vehicles)
-
-	rct_sprite* sprite = get_sprite(peep->peepex_follow_target);
-    if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP) {
-            // TODO: handle cases where the target is not a peep
-        instr->out_target_lost = true;
-        return;
-    }
-
-	rct_peep* target_peep = (rct_peep*)sprite;
     
 	rct_map_element *mapElement;
     bool checkBySliding = false;
+
+    rct_xyz16 walkTarget;
+
+    if (instr->target_peep) {
+        walkTarget.x = instr->target_peep->x;
+        walkTarget.y = instr->target_peep->y;
+        walkTarget.z = instr->target_peep->z;
+    }
+    else {
+        walkTarget.x = instr->target_fluid.x;
+        walkTarget.y = instr->target_fluid.y;
+        walkTarget.z = instr->target_fluid.z;
+    }
     
-    sint16 offsetX      = target_peep->x - peep->x;
-    sint16 offsetY      = target_peep->y - peep->y;
-    sint16 distancePow  = offsetX * offsetX + offsetY * offsetY;
+    sint32 offsetX      = walkTarget.x - peep->x;
+    sint32 offsetY      = walkTarget.y - peep->y;
+
+    sint32 distancePow  = offsetX * offsetX + offsetY * offsetY;
+
+    bool   targetIsSuspect = false;
 
     instr->out_effective_distance   = distancePow;
     instr->out_comfortable_position = false;
@@ -52,7 +57,7 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
 
     instr->out_facing_direction     = peepex_direction_from_xy(offsetX, offsetY);
 
-    if (peep->peepex_following_flags & 0x1) {
+    if (peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_FREE_WALK) {
         // peepex_following_flags will have 0x1 set when-ever we are naively chasing our target
 
             // We estimate a score for the target location using a bit of gradient
@@ -67,14 +72,15 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
         rct_xy16 location_pos[INSTANCES];
         rct_xy16 location_push;
         sint32 location_cost[INSTANCES] = { 0, 0, 0 };
-        uint32  randomSeed      = scenario_rand_max(8);
-        sint32  randomFlipped   = (randomSeed & 1)? 1 : -1;
-        sint16  randomOffset    = (1 + (randomSeed >> 1)) * randomFlipped;
-        rct_xy16 target_peep_effective;
+        uint32  randomSeed       = scenario_rand_max(8);
+        sint32  randomFlipped    = (randomSeed & 1)? 1 : -1;
+        sint32  randomOffset     = (1 + (randomSeed >> 1)) * randomFlipped;
+        rct_xy16 walkTargetAimed = { walkTarget.x, walkTarget.y };
 
-        sint16 targetForwardOffset = instr->target_forward_offset;
-        target_peep_effective.x = target_peep->x + peepex_directional_offset[target_peep->sprite_direction / 8].x * targetForwardOffset;
-        target_peep_effective.y = target_peep->y + peepex_directional_offset[target_peep->sprite_direction / 8].y * targetForwardOffset;
+        if (instr->target_peep && instr->target_forward_offset != 0) {
+            walkTargetAimed.x += peepex_directional_offset[instr->target_peep->sprite_direction / 8].x * instr->target_forward_offset;
+            walkTargetAimed.y += peepex_directional_offset[instr->target_peep->sprite_direction / 8].y * instr->target_forward_offset;
+        }
     
         location_pos[0].x = peep->destination_x;
         location_pos[0].y = peep->destination_y;
@@ -86,8 +92,8 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
             // first judge the locations based on the distance
 
         for (uint8 i = 0; i < instanceCount; i++) {
-            offsetX      = target_peep_effective.x - location_pos[i].x;
-            offsetY      = target_peep_effective.y - location_pos[i].y;
+            offsetX      = walkTargetAimed.x - location_pos[i].x;
+            offsetY      = walkTargetAimed.y - location_pos[i].y;
             distancePow  = offsetX * offsetX + offsetY * offsetY;
         
             location_cost[i] += (distancePow * instr->base_gradient_weight_in_percent) / 1000;
@@ -98,8 +104,8 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
                 location_cost[i] += (distancePow - instr->attempt_max_distance) * 100;
             }
 
-            offsetX      = target_peep->x - location_pos[i].x;
-            offsetY      = target_peep->y - location_pos[i].y;
+            offsetX      = walkTarget.x - location_pos[i].x;
+            offsetY      = walkTarget.y - location_pos[i].y;
             distancePow  = offsetX * offsetX + offsetY * offsetY;
         
                 // Punish being too close to the actual target
@@ -108,14 +114,16 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
                 location_cost[i] += (instr->attempt_min_distance - distancePow) * 200;
             }
 
-            offsetX      = target_peep->destination_x - location_pos[i].x;
-            offsetY      = target_peep->destination_y - location_pos[i].y;
-            distancePow  = offsetX * offsetX + offsetY * offsetY;
+            if (instr->target_peep) {
+                offsetX      = instr->target_peep->destination_x - location_pos[i].x;
+                offsetY      = instr->target_peep->destination_y - location_pos[i].y;
+                distancePow  = offsetX * offsetX + offsetY * offsetY;
         
-                // Punish being too close to the target's expected location
+                    // Punish being too close to the target's expected location
 
-            if (distancePow < instr->attempt_min_distance) {
-                location_cost[i] += (instr->attempt_min_distance - distancePow) * 75;
+                if (distancePow < instr->attempt_min_distance) {
+                    location_cost[i] += (instr->attempt_min_distance - distancePow) * 75;
+                }
             }
 
                 // Punish having to walk
@@ -123,6 +131,10 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
             offsetX      = peep->x - location_pos[i].x;
             offsetY      = peep->y - location_pos[i].y;
             distancePow  = offsetX * offsetX + offsetY * offsetY;
+
+            if (distancePow > 256 * 256 && i == 0) {
+                targetIsSuspect = true;
+            }
 
             location_cost[i] += distancePow / 2;
         }
@@ -132,6 +144,7 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
         uint16 firstSprites[64];
         uint32 firstSpritesCount;
         sint16 peepFindRange = 32;
+        rct_sprite *sprite;
         firstSpritesCount = sprite_get_first_in_multiple_quadrants(peep->x - peepFindRange, peep->y - peepFindRange, peep->x + peepFindRange, peep->y + peepFindRange, firstSprites, 64);
 		for (uint32 index = 0; index < firstSpritesCount; index++) {
             uint16 sprite_id = firstSprites[index];
@@ -148,16 +161,25 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
 
                     // Mildly punish for peeps nearby, harsly punish for peeps very close
 
+                sint32 effectiveWeight = instr->crowd_weight_in_percent;
+                if (other_peep->state == PEEP_STATE_WALKING ||
+                    other_peep->state == PEEP_STATE_PATROLLING) {
+                    effectiveWeight *= instr->moving_crowd_weight_in_percent;
+                }
+                else {
+                    effectiveWeight *= 100;
+                }
+
                 for (uint8 i = 0; i < instanceCount; i++) {
 		            sint16 distX = other_peep->x - location_pos[i].x;
 		            sint16 distY = other_peep->y - location_pos[i].y;
-		            sint16 workDist = distX * distX + distY * distY;
+		            sint32 workDist = distX * distX + distY * distY;
 
                     if (workDist < 256) {
-                        location_cost[i] += ((256 - workDist) * instr->crowd_weight_in_percent) / 3200;
-                    }
-                    if (workDist < 36) {
-                        location_cost[i] += ((36 - workDist) * instr->crowd_weight_in_percent) / 4;
+                        location_cost[i]        += ((256 - workDist) * effectiveWeight) / 320000;
+                        if (workDist < 36) {
+                            location_cost[i]    += ((36 - workDist) * effectiveWeight) / 400;
+                        }
                     }
                 }
             }
@@ -181,43 +203,29 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
 
             // Push the destination, if applicable
 
-        peep->destination_x += location_push.x;
-        peep->destination_y += location_push.y;
-        peep->destination_tolerence = 4;
+        if (!targetIsSuspect) {
+            peep->destination_x += location_push.x;
+            peep->destination_y += location_push.y;
+            peep->destination_tolerence = 4;
+        }
+        else {
+            peep->destination_x = walkTarget.x;
+            peep->destination_y = walkTarget.y;
+            peep->destination_tolerence = 4;
+        }
 
             // Make sure our position is allowed based on the tile rules
             //  We look at the current tile to see if the edges allow us to move there
-
+        
 	    mapElement = map_get_path_element_below_or_at(peep->x / 32, peep->y / 32, peep->z >> 3);
-	    if (mapElement && map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_PATH) {
-            sint32 edges = mapElement->properties.path.edges;
-            
-                // Be blocked by banners (probably this check should be in a function for future reference)
-
-            if (!peep || peep->type != PEEP_TYPE_STAFF) {
-                rct_map_element *bannerElement = get_banner_on_path(mapElement);
-                if (bannerElement != NULL) {
-                    do {
-                        edges &= bannerElement->properties.banner.flags;
-                    } while ((bannerElement = get_banner_on_path(bannerElement)) != NULL);
-                }
-            }
-
-                // Clamp our destination to the found edges. We know this cannot reach a
-                //  Point where we get stuck because then slide check would fail.
-
-            if (!(edges & 0x1))
-                peep->destination_x = max(peep->destination_x, (peep->x & 0xFFE0) + 12);
-            if (!(edges & 0x2))
-                peep->destination_y = min(peep->destination_y, (peep->y & 0xFFE0) + 20);
-            if (!(edges & 0x4))
-                peep->destination_x = min(peep->destination_x, (peep->x & 0xFFE0) + 20);
-            if (!(edges & 0x8))
-                peep->destination_y = max(peep->destination_y, (peep->y & 0xFFE0) + 12);
+	    if (mapElement) {
+            rct_xy16 dest = peepex_pathing_clamp_path_regular(mapElement, peep, peep->x, peep->y, peep->z, peep->destination_x, peep->destination_y, 0, 5, 12);
+            peep->destination_x = dest.x;
+            peep->destination_y = dest.y;
         }
         else {
-            peep->destination_x = target_peep->x;
-            peep->destination_y = target_peep->y;
+            peep->destination_x = peep->x;
+            peep->destination_y = peep->y;
         }
     }
 
@@ -225,7 +233,7 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
         //  walking towards an otherwise found target.
 
     sint16 x, y, z, xy_distance;
-
+    
     if (peep_update_action(&x, &y, &xy_distance, peep)){
             // We have some distance to move, so handle paths and slopes
 	    mapElement = map_get_path_element_below_or_at(x / 32, y / 32, (peep->z >> 3) + 2);
@@ -240,9 +248,9 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
             // We have reached our destination. If we were not walking freely, redo
             //  the slide check to see if we can switch to free behaviour or whether we
             //  should get another hint
-        if (peep->peepex_following_flags & 0x1)
+        if (peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_FREE_WALK)
             checkBySliding = true;
-        instr->out_comfortable_position = true;
+        instr->out_comfortable_position = peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_FREE_WALK;
     }
 
         // Every so-many ticks force the slide check so peeps cannot get easily get stuck
@@ -259,10 +267,10 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
         slidingInstr.current.x          = peep->x;
         slidingInstr.current.y          = peep->y;
         slidingInstr.current.z          = peep->z;
-        slidingInstr.target.x           = target_peep->x;
-        slidingInstr.target.y           = target_peep->y;
-        slidingInstr.target.z           = target_peep->z;
-        slidingInstr.max_xy_distance    = 0;    // we need to reach the actual tile
+        slidingInstr.target.x           = walkTarget.x;
+        slidingInstr.target.y           = walkTarget.y;
+        slidingInstr.target.z           = walkTarget.z;
+        slidingInstr.max_xy_distance    = instr->min_tile_nearness;    // we need to reach the actual tile
         slidingInstr.max_z_distance     = 2;    // allow for slopes
 
         peepex_sliding_check(&slidingInstr);
@@ -275,9 +283,9 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
             hintInstr.current.x         = peep->x;
             hintInstr.current.y         = peep->y;
             hintInstr.current.z         = peep->z;
-            hintInstr.target.x          = target_peep->x;
-            hintInstr.target.y          = target_peep->y;
-            hintInstr.target.z          = target_peep->z;
+            hintInstr.target.x          = walkTarget.x;
+            hintInstr.target.y          = walkTarget.y;
+            hintInstr.target.z          = walkTarget.z;
             hintInstr.max_search_depth  = 5;
 
             peepex_pathing_hint(&hintInstr);
@@ -289,7 +297,7 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
                 x += TileDirectionDelta[hintInstr.out_primary_direction].x;
                 y += TileDirectionDelta[hintInstr.out_primary_direction].y;
                 peep_move_one_tile_messy(x, y, hintInstr.out_primary_direction, peep);
-                peep->peepex_following_flags &= ~0x1;
+                peep->peepex_flags_tmp &= ~0x1;
             }
             else {
                 instr->out_target_lost  = true;
@@ -297,7 +305,7 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
         }
         else {
                 // We can reach the destination, use direct pathing
-            peep->peepex_following_flags |= 0x1;
+            peep->peepex_flags_tmp |= 0x1;
         }
     }
 
@@ -458,12 +466,16 @@ peepex_follow_instr create_peepex_follow_instr()
 {
     peepex_follow_instr instr;
     
+    instr.target_peep                       = 0;
+
     instr.attempt_min_distance              = 32*32;
     instr.attempt_max_distance              = 32*32;
     instr.target_forward_offset             = 0;
     instr.out_facing_direction              = 0;
     instr.crowd_weight_in_percent           = 100;
+    instr.moving_crowd_weight_in_percent    = 100;
     instr.base_gradient_weight_in_percent   = 100;
+    instr.min_tile_nearness                 = 0;
 
     return instr;
 }
