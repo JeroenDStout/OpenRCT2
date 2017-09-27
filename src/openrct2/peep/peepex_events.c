@@ -47,14 +47,16 @@ bool peepex_check_peep_notice_thing(rct_peep *peep, rct_xyz16 direction, sint16 
 
         // are we looking at the performer?
     uint8 targetDir = peepex_direction_from_xy(direction.x, direction.y);
-    if (targetDir == peep->sprite_direction) {
-            // are we really close?
-        if (distancePow < visualNear)
-            return true;
+    if ((targetDir*8) == peep->sprite_direction && distancePow < visualNear)
+        return true;
+    if ( (peep->sprite_direction == 0 && direction.x <  10) ||
+         (peep->sprite_direction == 1 && direction.y > -10) ||
+         (peep->sprite_direction == 2 && direction.x > -10) ||
+         (peep->sprite_direction == 3 && direction.y <  10) ) {
         if (visualOdds > 0 && scenario_rand_max(visualOdds) == 0)
             return true;
     }
-    
+
     if (audioOdds > 0 && scenario_rand_max(audioOdds) == 0)
         return true;
 
@@ -80,6 +82,9 @@ void peepex_broadcast_event_generic_oddity(peepex_event_broadcast_instr *instr, 
         curPeep = peepex_get_next_peep(&findPeeps, &xyz_direction, curPeep);
         if (!curPeep)
             break;
+
+        if (curPeep->type != PEEP_TYPE_GUEST && curPeep->staff_type == STAFF_TYPE_ENTERTAINER)
+            continue;
 
         if (curPeep == instr->primary_peep)
             continue;
@@ -158,6 +163,10 @@ void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr *instr, b
         curPeep = peepex_get_next_peep(&findPeeps, &xyz_direction, curPeep);
         if (!curPeep)
             break;
+
+            // entertainers can't be impressed with other peeps watching
+        if (curPeep->type != PEEP_TYPE_GUEST && curPeep->staff_type == STAFF_TYPE_ENTERTAINER)
+            continue;
 
         if (curPeep == instr->primary_peep)
             continue;
@@ -247,7 +256,7 @@ uint8 peepex_effective_peep_interest_in_generic_events(rct_peep *peep)
     if (peep->peepex_event_countdown > 0)
         return 0;
     
-    return (peep->peepex_interest_in_misc & 0xF) << 4;
+    return (peep->peepex_interest_in_misc & 0xF) << 3;
 }
 
 uint8 peepex_effective_peep_interest_in_entertainers(rct_peep *peep)
