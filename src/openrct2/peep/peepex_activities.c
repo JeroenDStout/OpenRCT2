@@ -247,12 +247,243 @@ void peepex_update_hamelin(rct_peep *peep)
                 stopFollowing = true;
             else
                 peep->peepex_event_countdown -= 1;
-        }
+    /*  Watching rides
+     */
+
+void peepex_made_ride_watcher_track(rct_peep *peep, rct_xy8 location, uint8 ride, uint8 excitement)
+{
+    peep->state = PEEP_STATE_EX_WATCHING_RIDE;
+    peep->peepex_follow_target      = 0;
+    peep->peepex_interest_location  = location;
+    peep->peepex_event_countdown    = 3 + scenario_rand_max(8);
+    peep->peepex_event_countdown    *= peep->peepex_event_countdown;
+    peep->peepex_ride               = ride;
+    peep->peepex_flags_tmp          = 0;
+    peep->peepex_vehicle_excitement = 20;
+    peepex_send_peep_to_self(peep);
+
+    peep->peepex_interest_in_rides  = (peep->peepex_interest_in_rides & 0xF0) | (((peep->peepex_interest_in_rides & 0xF) * scenario_rand_max(18)) >> 4);
+
+    if (peep->type == PEEP_TYPE_STAFF) {
+        peep->peepex_event_countdown      = 8;
+        peep->peepex_interest_in_misc     = 0;
+        peep->peepex_interest_in_rides    = 0;
     }
+}
+
+void peepex_update_watching_ride_cont(rct_peep *peep)
+{
+    if ((gScenarioTicks + peep->sprite_index) % 20 == 0) { // .5 second
+        if (peep->peepex_vehicle_excitement < 255)
+            peep->peepex_vehicle_excitement++;
+        if (peep->peepex_event_countdown > 0)
+            peep->peepex_event_countdown--;
+    }
+}
+
+void peepex_update_watching_ride(rct_peep *peep)
+{
+    bool      stopFollowing                 = false;
+    bool      closeEnoughForInteract        = false;
+
+    Ride *ride = get_ride(peep->peepex_ride);
+    rct_vehicle *vehicle = (peep->peepex_follow_target)? GET_VEHICLE(peep->peepex_follow_target) : 0;
+    rct_vehicle *next_vehicle;
+
+    //log_warning("a");
+    
+    peepex_follow_instr instr = create_peepex_follow_instr();
+    instr.attempt_min_distance              = 0;
+    instr.attempt_max_distance              = 50*50;
+    instr.out_facing_direction              = 0;
+    instr.crowd_weight_in_percent           = 1000;
+    instr.moving_crowd_weight_in_percent    = 10;
+    instr.base_gradient_weight_in_percent   = 20;
+    instr.target_fluid.x                    = peep->peepex_interest_location.x * 32 + 16;
+    instr.target_fluid.y                    = peep->peepex_interest_location.y * 32 + 16;
+    instr.target_fluid.z                    = peep->z;
+    instr.min_tile_nearness                 = 3;
+
+    if (vehicle && peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_NOSY) {
+        instr.target_fluid.x = vehicle->x;
+        instr.target_fluid.y = vehicle->y;
+    }
+
+    if (ride->type == RIDE_TYPE_NULL)
+        stopFollowing = true;
+    if (ride->num_vehicles == 0)
+        vehicle = 0;
+        
+    if (!stopFollowing) {
+        peepex_update_following(peep, &instr);
+    
+	    if (instr.out_target_lost) {
+            stopFollowing = true;
+        }
+        
+        closeEnoughForInteract     = instr.out_comfortable_position;
+    }
+
+    //log_warning("b");
+
+    bool foundNewVehicle = false;
+    
+    if (peep->peepex_event_countdown == 0)
+        stopFollowing = true;
+
+    if (!stopFollowing) {
+        sint16 vehicleOffsetX = 0, vehicleOffsetY = 0;
+        sint16 vehicleOffsetNextX, vehicleOffsetNextY;
+        sint16 vehicleOffsetTrackX, vehicleOffsetTrackY;
+        sint32 effDistanceA = 9999999, effDistanceB = 9999999, effDistanceC = 9999999;
+
+            // check if the ride has a vehicle on the tile we care about
+        if (!(peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_SEEN)) {
+            for (int i = 0; i < ride->num_vehicles; i++) {
+                if (ride->vehicles[i] == SPRITE_INDEX_NULL)
+                    break;
+
+                rct_vehicle *tryVehicle = GET_VEHICLE(ride->vehicles[i]);
+
+                if ((tryVehicle->x >> 5) == peep->peepex_interest_location.x &&
+                    (tryVehicle->y >> 5) == peep->peepex_interest_location.y) {
+                    vehicle = tryVehicle;
+                    peep->peepex_vehicle_excitement = scenario_rand_max(2);
+                    peep->peepex_flags_tmp &= ~PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_IS_FAR_AWAY;
+                    peep->peepex_flags_tmp &= ~PEEPEX_TMP_FOLLOW_FLAG_NOSY;
+                    if (scenario_rand_max(8) == 0) {
+                        peep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_NOSY;
+                    }
+                    peep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_SEEN;
+                    foundNewVehicle = true;
+                    break;
+                }
+            }
+        }
+
+    //log_warning("c");
+
+        if (!foundNewVehicle && vehicle && ride->num_vehicles > 1) {
+            next_vehicle    = GET_VEHICLE(vehicle_get_tail(vehicle)->next_vehicle_on_ride);
+
+            vehicleOffsetX = vehicle->x - peep->x;
+            vehicleOffsetY = vehicle->y - peep->y;
+            vehicleOffsetNextX = next_vehicle->x - peep->x;
+            vehicleOffsetNextY = next_vehicle->y - peep->y;
+            vehicleOffsetTrackX = (peep->peepex_interest_location.x*32) + 16 - peep->x;
+            vehicleOffsetTrackY = (peep->peepex_interest_location.y*32) + 16 - peep->y;
+
+            effDistanceA = (vehicleOffsetX*vehicleOffsetX) + (vehicleOffsetY*vehicleOffsetY);
+            effDistanceB = (vehicleOffsetNextX*vehicleOffsetNextX) + (vehicleOffsetNextY*vehicleOffsetNextY);
+            effDistanceC = (vehicleOffsetTrackX*vehicleOffsetTrackX) + (vehicleOffsetTrackY*vehicleOffsetTrackY);
+
+            if (!(peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_IS_FAR_AWAY) &&
+                 (effDistanceA > (12000 + (peep->sprite_index & 0xF) * 1000)) || (effDistanceA > effDistanceB)) {
+                peep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_IS_FAR_AWAY;
+                peep->peepex_flags_tmp &= ~PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_SEEN;
+                vehicle = next_vehicle;
+            }
+            if (!(peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_IS_FAR_AWAY) && effDistanceC > effDistanceA) {
+                peep->peepex_interest_location.x = vehicle->x >> 5;
+                peep->peepex_interest_location.y = vehicle->y >> 5;
+            }
+        }
+
+    //log_warning("d");
+
+        if (closeEnoughForInteract) {
+            if (vehicle && effDistanceA < 200000) {
+               peep->sprite_direction = peepex_direction_from_xy(vehicle->x - peep->x, vehicle->y - peep->y) * 8;
+            }
+            else {
+                peep->peepex_flags_tmp &= ~PEEPEX_TMP_FOLLOW_FLAG_NOSY;
+            }
+
+                // Put us at rest
+            if (peep->action > PEEP_ACTION_NONE_1) {
+                peep->action = PEEP_ACTION_NONE_1;
+                peep->next_action_sprite_type = 2;
+                invalidate_sprite_2((rct_sprite*)peep);
+            }
+
+            if (peep->peepex_vehicle_excitement == 1) {
+                peep->peepex_vehicle_excitement++;
+                    // Pick from a variety of very cheerful reactions
+                if (peep->type == PEEP_TYPE_GUEST && peep->action >= PEEP_ACTION_NONE_1) {
+                    peep->sprite_direction = instr.out_facing_direction * 8;
+                
+                    peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
+
+                    sint32 laugh;
+                    switch (scenario_rand_max(16)) {
+                    case 0:
+                    case 1:
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        peep->action = PEEP_ACTION_JUMP;
+                        peep->action_frame = 0;
+                        peep->action_sprite_image_offset = 0;
+                        peep_update_current_action_sprite_type(peep);
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_ODDITY;
+                        e.primary_peep   = peep;
+                        peepex_broadcast_event(&e);
+                        break;
+                    case 4:
+                    case 5:
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        peep->action = PEEP_ACTION_TAKE_PHOTO;
+                        peep->action_frame = 0; 
+                        peep->action_sprite_image_offset = 0;
+                        peep_update_current_action_sprite_type(peep);
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VISUAL_ODDITY;
+                        e.primary_peep   = peep;
+                        peepex_broadcast_event(&e);
+                        break;
+                    case 8:
+                    case 9:
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        peep->action = PEEP_ACTION_WAVE;
+                        peep->action_frame = 0; 
+                        peep->action_sprite_image_offset = 0;
+                        peep_update_current_action_sprite_type(peep);
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VISUAL_ODDITY;
+                        e.primary_peep   = peep;
+                        peepex_broadcast_event(&e);
+                        break;
+                    case 12:
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        peep->action = PEEP_ACTION_JOY;
+                        peep->action_frame = 0; 
+                        peep->action_sprite_image_offset = 0;
+                        peep_update_current_action_sprite_type(peep);
+                        invalidate_sprite_2((rct_sprite*)peep);
+                        break;
+                    case 13:
+                        laugh = scenario_rand_max(2);
+                        audio_play_sound_at_location(SOUND_LAUGH_1 + laugh, peep->x, peep->y, peep->z);
+                        e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_AUDIO_ODDITY;
+                        e.primary_peep   = peep;
+                        peepex_broadcast_event(&e);
+                        break;
+                    };
+                }
+                if (peep->peepex_event_countdown < 20) {
+                    // we would only have watched less than 10 seconds, so just leave quite soon instead
+                    peep->peepex_event_countdown = min(1, peep->peepex_event_countdown);
+                }
+            }
+        }
+
+    //log_warning("e");
+    }
+
+    peep->peepex_follow_target  = vehicle? vehicle->sprite_index : 0;
 
         // It is over, move along
     if (stopFollowing) {
-        log_warning("Hamelin release");
+        //log_warning("We lost the ride!");
         peepex_return_to_walking(peep);
     }
 }
