@@ -24,14 +24,15 @@ void peepex_base_update(rct_peep *peep)
 
 		// If guests are idly walking and they have spent a lot of time here, make them always leave.
 
-	//if (gConfigPeepEx.guest_max_time_in_park > 0 && peep->state == PEEP_STATE_WALKING) {
+	if (gConfigPeepEx.guest_max_time_in_park > 0 && peep->state == PEEP_STATE_WALKING) {
+        if (peep->type == PEEP_TYPE_GUEST) {
+		    uint32 time_duration = gScenarioTicks - peep->time_in_park;
 
-	//	uint32 time_duration = gScenarioTicks - peep->time_in_park;
-
-	//	if ((time_duration >> 11) > (uint32)gConfigPeepEx.guest_max_time_in_park) {
-	//		peep_leave_park(peep);
-	//	}
-	//}
+		    if ((time_duration >> 11) > (uint32)gConfigPeepEx.guest_max_time_in_park) {
+			    peep_leave_park(peep);
+		    }
+        }
+	}
 }
 
 bool peepex_update_walking_find_activity(rct_peep *peep)
