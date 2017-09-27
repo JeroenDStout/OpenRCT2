@@ -778,3 +778,103 @@ rct_peep *peepex_get_next_peep(peepex_find_peep_in_range_instr *instr, rct_xyz16
         return other_peep;
     }
 }
+
+rct_xy16 peepex_pathing_clamp_path_regular(rct_map_element *element, rct_peep *debugPeep, sint16 posX, sint16 posY, sint16 posZ, sint16 desX, sint16 desY, uint32 flags, sint8 regularDistance, sint8 fencedDistance)
+{
+    sint16 tileRelativeX    = desX - (posX >> 5);
+    sint16 tileRelativeY    = desY - (posY >> 5);
+    rct_xy16 output = { desX, desY };
+
+    uint8 checkDir = 0, restrictDir = 0, fenceDir = 0;
+    if (tileRelativeX < fencedDistance)
+        checkDir |= 0x1;
+    if (tileRelativeY > (32 - fencedDistance))
+        checkDir |= 0x2;
+    if (tileRelativeX > (32 - fencedDistance))
+        checkDir |= 0x4;
+    if (tileRelativeY < fencedDistance)
+        checkDir |= 0x8;
+
+    checkDir = 0xF;
+    //restrictDir = 0xF;
+
+    if (map_element_get_type(element) == MAP_ELEMENT_TYPE_PATH) {
+        sint32 edges = element->properties.path.edges;
+        bool autoFenced = footpath_element_is_sloped(element);
+
+        if (!autoFenced) {
+                // figure out if we are suspended
+            rct_map_element *surface = map_get_surface_element_at(posX >> 5, posY >> 5);
+            autoFenced = surface->base_height != element->base_height;
+        }
+
+        autoFenced = true;
+
+        if ((checkDir & edges) != checkDir) {
+                // for all edges we care about check if we are blocked and (if so) by a fence
+            for (int i = 0; i < 4; i++) {
+                if ((checkDir & (1 << i)) && !(edges & (1 << i))) {
+                    restrictDir |= 1 << i;
+                    if (autoFenced || fence_in_the_way(posX >> 5, posY >> 5, posZ >> 3, (posZ >> 3) + 2, i))
+                        fenceDir |= 1 << i;
+                }
+            }
+        }
+        if (checkDir != 0) {
+                // check if we can go there, but are blocked by a banner
+            rct_map_element *bannerElement = get_banner_on_path(element);
+            if (bannerElement != NULL) {
+                do {
+                    restrictDir |= checkDir & ~bannerElement->properties.banner.flags;
+                    checkDir    &= bannerElement->properties.banner.flags;
+                } while ((bannerElement = get_banner_on_path(bannerElement)) != NULL);
+            }
+        }
+        if (checkDir != 0) {
+                // check if we can go there but will find a non-queue path
+            rct_map_element *nextPath;
+            for (int i = 0; i < 4; i++) {
+                if (!(checkDir & (1 << i)))
+                    continue;
+                nextPath = map_get_path_element_below_or_at((posX + peepex_tilestep[i].x) >> 5, (posY + peepex_tilestep[i].y) >> 5, (posZ >> 3) + 2);
+                if (!nextPath) {
+                    restrictDir |= 1 << i;
+                    continue;
+                }
+                if (footpath_element_is_queue(nextPath)) {
+                    restrictDir |= 1 << i;
+                }
+            }
+        }
+        if (restrictDir & 0x1)
+            output.x = max(output.x, (posX & 0xFFE0) + ((fenceDir & 0x1)? fencedDistance : regularDistance));
+        if (restrictDir & 0x2)
+            output.y = min(output.y, (posY & 0xFFE0) + 32 - ((fenceDir & 0x2)? fencedDistance : regularDistance));
+        if (restrictDir & 0x4)
+            output.x = min(output.x, (posX & 0xFFE0) + 32 - ((fenceDir & 0x4)? fencedDistance : regularDistance));
+        if (restrictDir & 0x8)
+            output.y = max(output.y, (posY & 0xFFE0) + ((fenceDir & 0x8)? fencedDistance : regularDistance));
+    }
+    else {
+        // this shouldn't happen
+        log_warning("Off tile");
+        output.x = desX;
+        output.y = desY;
+    }
+
+    return output;
+}
+
+void peepex_send_peep_to_self(rct_peep *peep)
+{
+    peep->destination_x     = peep->x;
+    peep->destination_y     = peep->y;
+    peep->next_x            = peep->x & 0xFFE0;
+    peep->next_y            = peep->y & 0xFFE0;
+    peep->next_z            = peep->z >> 3;
+}
+
+uint32 peepex_get_peep_random(rct_peep *peep, uint32 salt)
+{
+    return ror32(salt + ror32(peep->sprite_index ^ 0x1234567F, 7), 3);
+}
