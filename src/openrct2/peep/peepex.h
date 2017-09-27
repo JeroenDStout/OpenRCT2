@@ -18,6 +18,7 @@
 #define _PEEPEX_H_
 
 #include "peep.h"
+#include "../ride/vehicle.h"
 
 enum {
     PEEPEX_CON_FLAG_FLAG_SEEDED_PEEP                       = 1 << 0    // zero as peeps are loaded from older savegames
@@ -116,6 +117,7 @@ bool peepex_update_patrolling_find_activity(rct_peep *peep);
 void peepex_make_witness(rct_peep *peep, uint16 target);
 void peepex_make_hamelin(rct_peep *peep, rct_peep *hamelin);
 void peepex_make_security_escort_out(rct_peep *peep);
+void peepex_made_ride_watcher_track(rct_peep *peep, rct_xy8 location, uint8 ride, uint8 excitement);
 void peepex_return_to_walking(rct_peep *peep);
 
     // events
@@ -123,14 +125,23 @@ void peepex_broadcast_event(peepex_event_broadcast_instr*);
 void peepex_broadcast_event_generic_oddity(peepex_event_broadcast_instr*, bool visual, bool audio);
 void peepex_broadcast_event_hamelin_display(peepex_event_broadcast_instr*);
 void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr*, bool visual, bool audio);
+void peepex_broadcast_event_generic_vehicle(peepex_event_broadcast_instr*, bool visual, bool audio);
 void peepex_broadcast_show_sprite_hint(peepex_event_broadcast_instr*);
 
     // new behaviours
 void peepex_update_witness(rct_peep *peep);
+void peepex_update_hamelin_cont(rct_peep *peep);
 void peepex_update_hamelin(rct_peep *peep);
+void peepex_update_watching_ride_cont(rct_peep *peep);
+void peepex_update_watching_ride(rct_peep *peep);
 void peepex_update_escorted_by_staff(rct_peep *peep);
 void peepex_update_security_chasing(rct_peep *peep);
 void peepex_update_security_escorting_out(rct_peep *peep);
+
+    // following
+enum {
+};
+rct_xy16 peepex_pathing_clamp_path_regular(rct_map_element*, rct_peep *debugPeep, sint16 posX, sint16 posY, sint16 posZ, sint16 desX, sint16 desY, uint32 flags, sint8 regularDistance, sint8 fencedDistance);
 
     // entertainers
 void peepex_entertainer_per_tile(rct_peep *peep);
@@ -140,5 +151,14 @@ void peepex_entertainer_does_event(rct_peep *peep);
 void peepex_update_interest(rct_peep*);
 uint8 peepex_effective_peep_interest_in_generic_events(rct_peep *peep);
 uint8 peepex_effective_peep_interest_in_entertainers(rct_peep *peep);
+uint8 peepex_effective_peep_interest_in_generic_rides(rct_peep *peep);
+uint8 peepex_effective_peep_interest_in_exciting_rides(rct_peep *peep);
+
+    // functionality
+enum {
+    PEEPEX_RANDOM_SALT_INTERESTS_0           = 0x1e4a5c16
+};
+uint32 peepex_get_peep_random(rct_peep*, uint32 salt);
+void peepex_send_peep_to_self(rct_peep*);
 
 #endif
