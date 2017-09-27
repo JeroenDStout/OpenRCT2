@@ -20,8 +20,16 @@
 #include "peep.h"
 
 enum {
-    PEEPEX_FOLLOWING_FLAG_FREE_WALK     = 1 << 0,
-    PEEPEX_FOLLOWING_FLAG_NOSY          = 1 << 1        // the peep will be more persistent
+    PEEPEX_CON_FLAG_FLAG_SEEDED_PEEP                       = 1 << 0    // zero as peeps are loaded from older savegames
+};
+
+enum {
+    PEEPEX_TMP_FOLLOW_FLAG_FREE_WALK                  = 1 << 0,
+    PEEPEX_TMP_FOLLOW_FLAG_NOSY                       = 1 << 1,   // the peep will be more persistent
+    PEEPEX_TMP_FOLLOW_FLAG_SPECIFIC_VEHICLE           = 1 << 2,   // the peep is looking at a specific vehicle
+    PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_IS_FAR_AWAY        = 1 << 3,
+    PEEPEX_TMP_FOLLOW_FLAG_EXCITING_LOCATION          = 1 << 4,
+    PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_SEEN               = 1 << 6    // set when peep saw a vehicle in their favourite tile
 };
 
 typedef struct peepex_follow_instr {
