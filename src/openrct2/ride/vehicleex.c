@@ -10,11 +10,13 @@ void vehicleex_per_tile(rct_vehicle *vehicle, bool forwards)
 {
     vehicleex_update_crossings(vehicle, forwards);
 
-    if (gConfigPeepEx.enable_hamelin_entertainer) {
-        peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
-        e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VEHICLE;
-        e.primary_vehicle   = vehicle;
-        peepex_broadcast_event(&e);
+    if (gConfigPeepEx.enable_ride_watch) {
+        if (vehicle_get_head(vehicle) == vehicle) {
+            peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
+            e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VEHICLE;
+            e.primary_vehicle   = vehicle;
+            peepex_broadcast_event(&e);
+        }
     }
 }
 
