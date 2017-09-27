@@ -6845,6 +6845,9 @@ static void peep_update(rct_peep *peep)
         case PEEP_STATE_EX_WITNESSING_EVENT:
             peepex_update_witness(peep);
             break;
+        case PEEP_STATE_EX_WATCHING_RIDE:
+            peepex_update_watching_ride(peep);
+            break;
         case PEEP_STATE_EX_ESCORTED_BY_STAFF:
             peepex_update_escorted_by_staff(peep);
             break;
