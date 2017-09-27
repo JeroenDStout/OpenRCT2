@@ -6622,7 +6622,13 @@ static void peep_update_walking(rct_peep* peep){
     peep->var_37 = chosen_edge | (chosen_position << 2);
 
     peep_decrement_num_riders(peep);
-    peep->state = PEEP_STATE_WATCHING;
+
+        /* Peepex overrules regular ride watching, to avoid confusion disable the
+         *  original behaviour entirely.
+         */
+    if (!gConfigPeepEx.enable_ride_watch)
+        peep->state = PEEP_STATE_WATCHING;
+
     peep_window_state_update(peep);
 
     peep->sub_state = 0;
