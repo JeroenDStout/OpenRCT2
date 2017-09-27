@@ -13,6 +13,13 @@ const rct_xy16 peepex_directional[4] = {
     {  0, -2 }
 };
 
+const rct_xy16 peepex_tilestep[4] = {
+    { -32,   0 },
+    {   0,  32 },
+    {  32,   0 },
+    {   0, -32 }
+};
+
 void peepex_base_update(rct_peep *peep)
 {
     peepex_update_interest(peep);
