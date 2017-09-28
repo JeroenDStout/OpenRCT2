@@ -248,7 +248,7 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
             // We have reached our destination. If we were not walking freely, redo
             //  the slide check to see if we can switch to free behaviour or whether we
             //  should get another hint
-        if (peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_FREE_WALK)
+        if (!(peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_FREE_WALK))
             checkBySliding = true;
         instr->out_comfortable_position = peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_FREE_WALK;
     }
