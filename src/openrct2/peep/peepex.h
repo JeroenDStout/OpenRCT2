@@ -55,8 +55,10 @@ typedef struct peepex_sliding_check_instr {
     rct_peep  *peep;
     rct_xyz16 current, target;
     sint16    max_xy_distance, max_z_distance;
-
+    
+    uint8     out_first_step_direction;
     bool      out_target_is_reachable;
+    bool      out_potential_block;
 } peepex_sliding_check_instr;
 
 typedef struct peepex_pathing_hint_instr {
