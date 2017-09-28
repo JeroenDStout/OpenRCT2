@@ -21,6 +21,7 @@
 
 //void vehicleex_upon_depart(rct_vehicle* vehicle);
 void vehicleex_per_tile(rct_vehicle* vehicle, bool forwards);
+void vehicleex_per_splash(rct_vehicle* vehicle);
 void vehicleex_update_crossings(rct_vehicle* vehicle, bool forwards);
 void vehicleex_claxon(rct_vehicle*);
 

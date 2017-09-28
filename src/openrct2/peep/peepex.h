@@ -94,7 +94,8 @@ enum {
     PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE,
     PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_VISUAL,
     PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_AUDIO,
-    PEEPEX_BROADCAST_EVENT_GENERIC_VEHICLE
+    PEEPEX_BROADCAST_EVENT_VEHICLE_CALM,
+    PEEPEX_BROADCAST_EVENT_VEHICLE_SPLASH
 };
 
 enum {
@@ -118,10 +119,11 @@ bool peepex_update_walking_find_activity(rct_peep *peep);
 bool peepex_update_patrolling_find_activity(rct_peep *peep);
 
     // make do
-void peepex_make_witness(rct_peep *peep, uint16 target);
+void peepex_make_witness_from_oddity(rct_peep *peep, uint16 target);
 void peepex_make_hamelin(rct_peep *peep, rct_peep *hamelin);
 void peepex_make_security_escort_out(rct_peep *peep);
-void peepex_made_ride_watcher_track(rct_peep *peep, rct_xy8 location, uint8 ride, uint8 excitement);
+void peepex_made_ride_watcher_track(rct_peep *peep, rct_xy8 location, uint8 ride, bool interesting);
+void peepex_made_ride_watcher_vehicle(rct_peep *peep, rct_vehicle *vehicle, bool interesting);
 void peepex_return_to_walking(rct_peep *peep);
 
     // events
@@ -129,10 +131,12 @@ void peepex_broadcast_event(peepex_event_broadcast_instr*);
 void peepex_broadcast_event_generic_oddity(peepex_event_broadcast_instr*, bool visual, bool audio);
 void peepex_broadcast_event_hamelin_display(peepex_event_broadcast_instr*);
 void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr*, bool visual, bool audio);
-void peepex_broadcast_event_generic_vehicle(peepex_event_broadcast_instr*, bool visual, bool audio);
+void peepex_broadcast_event_vehicle_calm(peepex_event_broadcast_instr*, bool visual, bool audio);
+void peepex_broadcast_event_vehicle_splash(peepex_event_broadcast_instr*);
 void peepex_broadcast_show_sprite_hint(peepex_event_broadcast_instr*);
 
     // new behaviours
+void peepex_update_witness_cont(rct_peep *peep);
 void peepex_update_witness(rct_peep *peep);
 void peepex_update_hamelin_cont(rct_peep *peep);
 void peepex_update_hamelin(rct_peep *peep);

@@ -7089,6 +7089,7 @@ static void vehicle_update_handle_water_splash(rct_vehicle *vehicle)
                     rct_vehicle *nextNextVehicle = GET_VEHICLE(nextVehicle->next_vehicle_on_ride);
                     if (!track_element_is_covered(nextNextVehicle->track_type >> 2)) {
                         if (vehicle->track_progress == 4) {
+                            vehicleex_per_splash(vehicle);
                             vehicle_update_play_water_splash_sound();
                         }
                     }
@@ -7098,6 +7099,7 @@ static void vehicle_update_handle_water_splash(rct_vehicle *vehicle)
     } else {
         if (trackType == TRACK_ELEM_25_DEG_DOWN_TO_FLAT) {
             if (vehicle->track_progress == 12) {
+                vehicleex_per_splash(vehicle);
                 vehicle_update_play_water_splash_sound();
             }
         }
@@ -7105,6 +7107,7 @@ static void vehicle_update_handle_water_splash(rct_vehicle *vehicle)
     if (!vehicle->is_child) {
         if (trackType == TRACK_ELEM_WATER_SPLASH) {
             if (vehicle->track_progress == 48) {
+                vehicleex_per_splash(vehicle);
                 vehicle_update_play_water_splash_sound();
             }
         }

@@ -13,10 +13,20 @@ void vehicleex_per_tile(rct_vehicle *vehicle, bool forwards)
     if (gConfigPeepEx.enable_ride_watch) {
         if (vehicle_get_head(vehicle) == vehicle) {
             peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
-            e.broadcast_type = PEEPEX_BROADCAST_EVENT_GENERIC_VEHICLE;
+            e.broadcast_type = PEEPEX_BROADCAST_EVENT_VEHICLE_CALM;
             e.primary_vehicle   = vehicle;
             peepex_broadcast_event(&e);
         }
+    }
+}
+
+void vehicleex_per_splash(rct_vehicle *vehicle)
+{
+    if (vehicle->velocity > 0x20364) {
+        peepex_event_broadcast_instr e = create_peepex_event_broadcast_instr();
+        e.broadcast_type = PEEPEX_BROADCAST_EVENT_VEHICLE_SPLASH;
+        e.primary_vehicle   = vehicle;
+        peepex_broadcast_event(&e);
     }
 }
 
