@@ -273,14 +273,19 @@ void peepex_made_ride_watcher_track(rct_peep *peep, rct_xy8 location, uint8 ride
     peep->state = PEEP_STATE_EX_WATCHING_RIDE;
     peep->peepex_follow_target      = 0;
     peep->peepex_interest_location  = location;
-    peep->peepex_event_countdown    = (exciting? 3 : 2) + scenario_rand_max(exciting? 8 : 4);
-    peep->peepex_event_countdown    *= peep->peepex_event_countdown;
+    peep->peepex_event_countdown    = 1 + scenario_rand_max(exciting? 8 : 4);
     peep->peepex_ride               = ride;
     peep->peepex_flags_tmp          = 0;
     peep->peepex_vehicle_excitement = 20;
     if (exciting) {
         peep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_EXCITING_LOCATION;
+        peep->peepex_event_countdown    += peepex_effective_peep_interest_in_exciting_rides(peep) >> (3 + scenario_rand_max(4));
     }
+    else {
+        peep->peepex_event_countdown    += peepex_effective_peep_interest_in_generic_rides(peep) >> (3 + scenario_rand_max(4));
+    }
+    peep->peepex_event_countdown    *= peep->peepex_event_countdown;
+    peep->peepex_event_countdown    += 20;
     peepex_send_peep_to_self(peep);
 
     if (exciting)
@@ -342,7 +347,7 @@ void peepex_update_watching_ride(rct_peep *peep)
     instr.target_fluid.x                    = peep->peepex_interest_location.x * 32 + 16;
     instr.target_fluid.y                    = peep->peepex_interest_location.y * 32 + 16;
     instr.target_fluid.z                    = peep->z;
-    instr.min_tile_nearness                 = 2;
+    instr.min_tile_nearness                 = 4;
 
     if (vehicle && peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_NOSY) {
         instr.target_fluid.x = vehicle->x;
@@ -520,6 +525,16 @@ void peepex_update_watching_ride(rct_peep *peep)
                 if (peep->peepex_event_countdown < 20) {
                     // we would only have watched less than 10 seconds, so just leave quite soon instead
                     peep->peepex_event_countdown = min(1, peep->peepex_event_countdown);
+                }
+            }
+            else if ((0 == peep->peepex_vehicle_excitement % 10) && peep->peepex_vehicle_excitement > 25) {
+                if (scenario_rand_max(16) == 0) {
+                    invalidate_sprite_2((rct_sprite*)peep);
+                    peep->action = PEEP_ACTION_CHECK_TIME;
+                    peep->action_frame = 0; 
+                    peep->action_sprite_image_offset = 0;
+                    peep_update_current_action_sprite_type(peep);
+                    invalidate_sprite_2((rct_sprite*)peep);
                 }
             }
         }
