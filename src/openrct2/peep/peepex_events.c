@@ -338,7 +338,9 @@ uint8 peepex_effective_peep_interest_in_generic_rides(rct_peep *peep)
         return 0;
     
     uint32 interest = (peep->peepex_interest_in_rides & 0xF);
-    interest *= 8 + interest / 2;
+    interest *= interest;
+    interest >>= 4;
+    interest *= (8 + interest / 2) * 2;
     return min(interest, 0xFF);
 }
 
