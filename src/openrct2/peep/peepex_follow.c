@@ -258,6 +258,8 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
         checkBySliding = true;
     }
 
+    checkBySliding = true;
+
     if (checkBySliding) {
             // Do the slide check
 
@@ -304,8 +306,19 @@ void peepex_update_following(rct_peep *peep, peepex_follow_instr* instr)
             }
         }
         else {
-                // We can reach the destination, use direct pathing
-            peep->peepex_flags_tmp |= 0x1;
+            if (slidingInstr.out_potential_block) {
+                log_warning("potential");
+                peep->peepex_flags_tmp &= ~0x1;
+                x = peep->x & 0xFFE0;
+                y = peep->y & 0xFFE0;
+                x += TileDirectionDelta[slidingInstr.out_first_step_direction].x;
+                y += TileDirectionDelta[slidingInstr.out_first_step_direction].y;
+                peep_move_one_tile_messy(x, y, slidingInstr.out_first_step_direction, peep);
+            }
+            else {
+                    // We can reach the destination, use direct pathing
+                peep->peepex_flags_tmp |= 0x1;
+            }
         }
     }
 
@@ -336,16 +349,19 @@ void peepex_sliding_check(peepex_sliding_check_instr* instr)
     current.y = instr->current.y;
     current.z = instr->current.z;
 
+    instr->out_potential_block  = false;
+
     uint8 loops = 0;
 
     while (true) {
             // Are we close enough?
-        if (abs((current.x & 0xFE00) - (instr->target.x & 0xFE00)) <= instr->max_xy_distance &&
-            abs((current.y & 0xFE00) - (instr->target.y & 0xFE00)) <= instr->max_xy_distance) {
+        if (abs((current.x >> 5) - (instr->target.x >> 5)) <= instr->max_xy_distance &&
+            abs((current.y >> 5) - (instr->target.y >> 5)) <= instr->max_xy_distance) {
             if (abs((current.z >> 3) - (instr->target.z >> 3)) > instr->max_z_distance) {
                     // we're at the right xy but wrong z - we can never reach by sliding
                 break;
             }
+    
             instr->out_target_is_reachable = true;
             return;
         }
@@ -359,10 +375,9 @@ void peepex_sliding_check(peepex_sliding_check_instr* instr)
             // Find our offset
         sint16 offsetX = instr->target.x - current.x;
         sint16 offsetY = instr->target.y - current.y;
-        uint8 direction;
+        uint8 direction, immediateDirection;
 
-        direction = peepex_direction_from_xy(offsetX, offsetY);
-        
+        immediateDirection = direction = peepex_direction_from_xy(offsetX, offsetY);
             // If we cannot find a path right away, try the less urgent direction as well
         if (!peepex_find_connected_path(instr->peep, mapElement, current.x, current.y, direction, &current.z)) {
             if (direction & 0x1) {
@@ -378,6 +393,12 @@ void peepex_sliding_check(peepex_sliding_check_instr* instr)
             if (!peepex_find_connected_path(instr->peep, mapElement, current.x, current.y, direction, &current.z)) {
                 break;
             }
+        }
+
+        if (loops == 0) {
+            instr->out_potential_block      = immediateDirection != direction;
+            if (instr->out_potential_block) log_warning("hm %i %i", immediateDirection, direction);
+            instr->out_first_step_direction = direction;
         }
 
             // Make sure we don't get stuck. Peeps walking from very far away would need a great number of checks. Currently this is
@@ -425,8 +446,11 @@ void peepex_pathing_hint(peepex_pathing_hint_instr* instr)
 
 bool peepex_find_connected_path(rct_peep *peep, rct_map_element *element, sint16 x, sint16 y, uint8 direction, sint16 *nextZ)
 {
-    if (!(element->properties.path.edges & (1 << direction)))
+    log_warning("try %i %i", x >> 5, y >> 5);
+    if (!(element->properties.path.edges & (1 << direction))) {
+        log_warning("fail");
         return false;
+    }
 
     if (!peep || peep->type != PEEP_TYPE_STAFF) {
         rct_map_element *bannerElement = get_banner_on_path(element);
