@@ -10,19 +10,24 @@
     /* witness
      */
 
-void peepex_make_witness(rct_peep *peep, uint16 sprite)
+void peepex_make_witness_from_oddity(rct_peep *peep, uint16 sprite)
 {
-    //log_warning("witness");
-
     peep->state = PEEP_STATE_EX_WITNESSING_EVENT;
     peep->peepex_follow_target = sprite;
-    peep->peepex_event_countdown = 3 + scenario_rand_max(16);
+    peep->peepex_event_countdown = 2 + scenario_rand_max(16);
     peep->peepex_interest_in_misc = (peep->peepex_interest_in_misc & 0xF0) | (((peep->peepex_interest_in_misc & 0x0F) * scenario_rand_max(18)) >> 4);
     peepex_send_peep_to_self(peep);
 
     if (peep->type == PEEP_TYPE_STAFF) {
-        peep->peepex_event_countdown      = 10;
         peep->peepex_interest_in_misc     = 0;
+    }
+}
+
+void peepex_update_witness_cont(rct_peep *peep)
+{
+    if ((gScenarioTicks+peep->sprite_index) % 10 == 0) { // 4 per second
+        if (peep->peepex_event_countdown > 0)
+            peep->peepex_event_countdown -= 1;
     }
 }
 
@@ -44,6 +49,9 @@ void peepex_update_witness(rct_peep *peep)
     instr.crowd_weight_in_percent           = 100;
     instr.base_gradient_weight_in_percent   = 0;
     instr.target_peep                       = (rct_peep*)sprite;
+
+    if (peep->peepex_event_countdown == 0)
+        stopFollowing = true;
 
     if (!stopFollowing) {
         peepex_update_following(peep, &instr);
@@ -107,7 +115,7 @@ void peepex_make_hamelin(rct_peep *peep, rct_peep *hamelin)
 
     peep->state = PEEP_STATE_EX_FOLLOWING_HAMELIN;
     peep->peepex_follow_target = hamelin->sprite_index;
-    peep->peepex_event_countdown = 4 + scenario_rand_max(32);
+    peep->peepex_event_countdown = 4 + scenario_rand_max(64);
     peep->peepex_interest_in_misc = (peep->peepex_interest_in_misc & 0x0F) | (((peep->peepex_interest_in_misc >> 4) * scenario_rand_max(18)) & 0xF0);
     peepex_send_peep_to_self(peep);
 
@@ -119,7 +127,7 @@ void peepex_make_hamelin(rct_peep *peep, rct_peep *hamelin)
 
 void peepex_update_hamelin_cont(rct_peep *peep)
 {
-    if (gScenarioTicks % 20 == 0) {
+    if (gScenarioTicks % 20 == 0) { // 2 per second
         if (peep->peepex_event_countdown > 0)
             peep->peepex_event_countdown -= 1;
     }
@@ -260,24 +268,41 @@ void peepex_update_hamelin(rct_peep *peep)
     /*  Watching rides
      */
 
-void peepex_made_ride_watcher_track(rct_peep *peep, rct_xy8 location, uint8 ride, uint8 excitement)
+void peepex_made_ride_watcher_track(rct_peep *peep, rct_xy8 location, uint8 ride, bool exciting)
 {
     peep->state = PEEP_STATE_EX_WATCHING_RIDE;
     peep->peepex_follow_target      = 0;
     peep->peepex_interest_location  = location;
-    peep->peepex_event_countdown    = 3 + scenario_rand_max(8);
+    peep->peepex_event_countdown    = (exciting? 3 : 2) + scenario_rand_max(exciting? 8 : 4);
     peep->peepex_event_countdown    *= peep->peepex_event_countdown;
     peep->peepex_ride               = ride;
     peep->peepex_flags_tmp          = 0;
     peep->peepex_vehicle_excitement = 20;
+    if (exciting) {
+        peep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_EXCITING_LOCATION;
+    }
     peepex_send_peep_to_self(peep);
 
-    peep->peepex_interest_in_rides  = (peep->peepex_interest_in_rides & 0xF0) | (((peep->peepex_interest_in_rides & 0xF) * scenario_rand_max(18)) >> 4);
+    if (exciting)
+        peep->peepex_interest_in_rides  = (peep->peepex_interest_in_rides & 0xF0) | (((peep->peepex_interest_in_rides & 0x0F) * scenario_rand_max(18)) >> 4);
+    else
+        peep->peepex_interest_in_rides  = (peep->peepex_interest_in_rides & 0x0F) | (((peep->peepex_interest_in_rides >> 4) * scenario_rand_max(18)) & 0xF0);
 
     if (peep->type == PEEP_TYPE_STAFF) {
         peep->peepex_event_countdown      = 8;
         peep->peepex_interest_in_misc     = 0;
         peep->peepex_interest_in_rides    = 0;
+    }
+}
+
+void peepex_made_ride_watcher_vehicle(rct_peep *peep, rct_vehicle *vehicle, bool exciting)
+{
+    rct_xy8 location = { vehicle->x >> 5, vehicle->y >> 5 };
+    peepex_made_ride_watcher_track(peep, location, vehicle->ride, exciting);
+    peep->peepex_follow_target      = vehicle->sprite_index;
+    peep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_SEEN;
+    if (scenario_rand_max(8) == 0) {
+        peep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_NOSY;
     }
 }
 
@@ -300,19 +325,24 @@ void peepex_update_watching_ride(rct_peep *peep)
     rct_vehicle *vehicle = (peep->peepex_follow_target)? GET_VEHICLE(peep->peepex_follow_target) : 0;
     rct_vehicle *next_vehicle;
 
+    if (vehicle && vehicle->sprite_identifier != SPRITE_IDENTIFIER_VEHICLE) {
+        log_warning("Vehicle mysteriously missing: %i", peep->peepex_follow_target);
+        vehicle = 0;
+    }
+
     //log_warning("a");
     
     peepex_follow_instr instr = create_peepex_follow_instr();
-    instr.attempt_min_distance              = 0;
-    instr.attempt_max_distance              = 50*50;
+    instr.attempt_min_distance              = 32*32;
+    instr.attempt_max_distance              = 96*96;
     instr.out_facing_direction              = 0;
-    instr.crowd_weight_in_percent           = 1000;
-    instr.moving_crowd_weight_in_percent    = 10;
-    instr.base_gradient_weight_in_percent   = 20;
+    instr.crowd_weight_in_percent           = 100;
+    instr.moving_crowd_weight_in_percent    = 20;
+    instr.base_gradient_weight_in_percent   = 30;
     instr.target_fluid.x                    = peep->peepex_interest_location.x * 32 + 16;
     instr.target_fluid.y                    = peep->peepex_interest_location.y * 32 + 16;
     instr.target_fluid.z                    = peep->z;
-    instr.min_tile_nearness                 = 3;
+    instr.min_tile_nearness                 = 2;
 
     if (vehicle && peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_NOSY) {
         instr.target_fluid.x = vehicle->x;
@@ -328,10 +358,11 @@ void peepex_update_watching_ride(rct_peep *peep)
         peepex_update_following(peep, &instr);
     
 	    if (instr.out_target_lost) {
+            log_warning("lost target");
             stopFollowing = true;
         }
         
-        closeEnoughForInteract     = instr.out_comfortable_position;
+        closeEnoughForInteract     = instr.out_comfortable_position && instr.out_effective_distance < 100*100;
     }
 
     //log_warning("b");
@@ -349,11 +380,12 @@ void peepex_update_watching_ride(rct_peep *peep)
 
             // check if the ride has a vehicle on the tile we care about
         if (!(peep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_VEHICLE_SEEN)) {
-            for (int i = 0; i < ride->num_vehicles; i++) {
-                if (ride->vehicles[i] == SPRITE_INDEX_NULL)
-                    break;
-
-                rct_vehicle *tryVehicle = GET_VEHICLE(ride->vehicles[i]);
+            for (sint32 i = 0; i < MAX_VEHICLES_PER_RIDE; i++) {
+                uint16 spriteIndex = ride->vehicles[i];
+                if (spriteIndex == SPRITE_INDEX_NULL)
+                    continue;
+                
+                rct_vehicle *tryVehicle = GET_VEHICLE(spriteIndex);
 
                 if ((tryVehicle->x >> 5) == peep->peepex_interest_location.x &&
                     (tryVehicle->y >> 5) == peep->peepex_interest_location.y) {
@@ -372,7 +404,7 @@ void peepex_update_watching_ride(rct_peep *peep)
         }
 
     //log_warning("c");
-
+        
         if (!foundNewVehicle && vehicle && ride->num_vehicles > 1) {
             next_vehicle    = GET_VEHICLE(vehicle_get_tail(vehicle)->next_vehicle_on_ride);
 
@@ -427,6 +459,8 @@ void peepex_update_watching_ride(rct_peep *peep)
                     sint32 laugh;
                     switch (scenario_rand_max(16)) {
                     case 0:
+                        if (!vehicle || vehicle->num_peeps == 0)
+                            break;
                     case 1:
                         invalidate_sprite_2((rct_sprite*)peep);
                         peep->action = PEEP_ACTION_JUMP;
@@ -439,6 +473,8 @@ void peepex_update_watching_ride(rct_peep *peep)
                         peepex_broadcast_event(&e);
                         break;
                     case 4:
+                        if (!vehicle || vehicle->num_peeps == 0)
+                            break;
                     case 5:
                         invalidate_sprite_2((rct_sprite*)peep);
                         peep->action = PEEP_ACTION_TAKE_PHOTO;
@@ -452,6 +488,8 @@ void peepex_update_watching_ride(rct_peep *peep)
                         break;
                     case 8:
                     case 9:
+                        if (!vehicle || vehicle->num_peeps == 0)
+                            break;
                         invalidate_sprite_2((rct_sprite*)peep);
                         peep->action = PEEP_ACTION_WAVE;
                         peep->action_frame = 0; 
@@ -489,7 +527,18 @@ void peepex_update_watching_ride(rct_peep *peep)
     //log_warning("e");
     }
 
-    peep->peepex_follow_target  = vehicle? vehicle->sprite_index : 0;
+    peep->peepex_follow_target = 0;
+
+    if (vehicle) {
+        for (int i = 0; i < ride->num_vehicles; i++) {
+            if (ride->vehicles[i] == SPRITE_INDEX_NULL)
+                break;
+            if (ride->vehicles[i] != vehicle->sprite_index)
+                continue;
+            peep->peepex_follow_target = vehicle->sprite_index;
+            break;
+        }
+    }
 
         // It is over, move along
     if (stopFollowing) {

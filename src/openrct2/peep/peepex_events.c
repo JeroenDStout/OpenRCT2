@@ -31,8 +31,11 @@ void peepex_broadcast_event(peepex_event_broadcast_instr *instr)
     case PEEPEX_BROADCAST_EVENT_HAMELIN_SNARE_VISUAL:
         peepex_broadcast_event_hamelin_snare(instr, false, true);
         break;
-    case PEEPEX_BROADCAST_EVENT_GENERIC_VEHICLE:
-        peepex_broadcast_event_generic_vehicle(instr, true, true);
+    case PEEPEX_BROADCAST_EVENT_VEHICLE_CALM:
+        peepex_broadcast_event_vehicle_calm(instr, true, true);
+        break;
+    case PEEPEX_BROADCAST_EVENT_VEHICLE_SPLASH:
+        peepex_broadcast_event_vehicle_splash(instr);
         break;
     }
 
@@ -90,6 +93,7 @@ void peepex_broadcast_event_generic_oddity(peepex_event_broadcast_instr *instr, 
             continue;
 
         uint8 interest = peepex_effective_peep_interest_in_generic_events(curPeep);
+        interest >>= 2;
         if (interest == 0)
             continue;
         
@@ -101,7 +105,7 @@ void peepex_broadcast_event_generic_oddity(peepex_event_broadcast_instr *instr, 
             continue;
 
         log_warning("Hamelin from seeing one");
-        peepex_make_witness(curPeep, instr->primary_peep->sprite_index);
+        peepex_make_witness_from_oddity(curPeep, instr->primary_peep->sprite_index);
     }
 }
 
@@ -133,7 +137,7 @@ void peepex_broadcast_event_hamelin_display(peepex_event_broadcast_instr *instr)
             continue;
         
         sint16 distance = (xyz_direction.x*xyz_direction.x) + (xyz_direction.y*xyz_direction.y);
-        if (!peepex_check_peep_notice_thing(curPeep, xyz_direction, distance, 128, 8, 64, 4))
+        if (!peepex_check_peep_notice_thing(curPeep, xyz_direction, distance, 128, 8, 128, 4))
             continue;
 
         if (scenario_rand_max(0xFF) > interest)
@@ -187,12 +191,12 @@ void peepex_broadcast_event_hamelin_snare(peepex_event_broadcast_instr *instr, b
                 peepex_make_hamelin(curPeep, GET_PEEP(instr->primary_peep->peepex_follow_target));
         }
         else {
-            peepex_make_witness(curPeep, instr->primary_peep->sprite_index);
+            peepex_make_witness_from_oddity(curPeep, instr->primary_peep->sprite_index);
         }
     }
 }
 
-void peepex_broadcast_event_generic_vehicle(peepex_event_broadcast_instr *instr, bool visual, bool audio)
+void peepex_broadcast_event_vehicle_calm(peepex_event_broadcast_instr *instr, bool visual, bool audio)
 {
     uint16 peepBuffer[256];
     rct_peep *curPeep = 0;
@@ -206,7 +210,7 @@ void peepex_broadcast_event_generic_vehicle(peepex_event_broadcast_instr *instr,
     findPeeps.range = 128;
     peepex_prepare_range(&findPeeps);
 
-    rct_xy8 vehiclePos = { instr->primary_vehicle->x / 32, instr->primary_vehicle->y / 32 };
+//    rct_xy8 vehiclePos = { instr->primary_vehicle->x / 32, instr->primary_vehicle->y / 32 };
 
     rct_xyz16 xyz_direction;
     while (true) {
@@ -218,7 +222,7 @@ void peepex_broadcast_event_generic_vehicle(peepex_event_broadcast_instr *instr,
             continue;
 
         uint8 interest = peepex_effective_peep_interest_in_generic_rides(curPeep);
-        if (interest == 0)
+        if (interest <= 50)
             continue;
         
         sint16 distance = (xyz_direction.x*xyz_direction.x) + (xyz_direction.y*xyz_direction.y);
@@ -229,7 +233,58 @@ void peepex_broadcast_event_generic_vehicle(peepex_event_broadcast_instr *instr,
             continue;
 
         log_warning("Watching track from vehicle!");
-        peepex_made_ride_watcher_track(curPeep, vehiclePos, instr->primary_vehicle->ride, 0xFF);
+        peepex_made_ride_watcher_vehicle(curPeep, instr->primary_vehicle, false);
+    }
+}
+
+void peepex_broadcast_event_vehicle_splash(peepex_event_broadcast_instr *instr)
+{
+    uint16 peepBuffer[256];
+    rct_peep *curPeep = 0;
+
+    peepex_find_peep_in_range_instr findPeeps;
+    findPeeps.point.x = instr->primary_vehicle->x;
+    findPeeps.point.y = instr->primary_vehicle->y;
+    findPeeps.point.z = instr->primary_vehicle->z;
+    findPeeps.temp_buffer = peepBuffer;
+    findPeeps.max_peeps = 256;
+    findPeeps.range = 256;
+    peepex_prepare_range(&findPeeps);
+
+//    rct_xy8 vehiclePos = { instr->primary_vehicle->x / 32, instr->primary_vehicle->y / 32 };
+
+    rct_xyz16 xyz_direction;
+    while (true) {
+        curPeep = peepex_get_next_peep(&findPeeps, &xyz_direction, curPeep);
+        if (!curPeep)
+            break;
+
+        if (curPeep->type == STAFF_TYPE_ENTERTAINER)
+            continue;
+        if (curPeep->action == PEEP_STATE_EX_WATCHING_RIDE && !(curPeep->peepex_flags_tmp & PEEPEX_TMP_FOLLOW_FLAG_EXCITING_LOCATION)) {
+            if (curPeep->peepex_ride == instr->primary_vehicle->ride) {
+                    // switch to a new, more interesting location!
+                curPeep->peepex_interest_location.x = (uint8)(instr->primary_vehicle->x >> 5);
+                curPeep->peepex_interest_location.y = (uint8)(instr->primary_vehicle->y >> 5);
+                curPeep->peepex_event_countdown += scenario_rand_max(0x16);
+                curPeep->peepex_flags_tmp |= PEEPEX_TMP_FOLLOW_FLAG_EXCITING_LOCATION;
+                log_warning("promoted ride watching...");
+            }
+        }
+
+        uint8 interest = peepex_effective_peep_interest_in_exciting_rides(curPeep);
+        if (interest <= 50)
+            continue;
+        
+        sint16 distance = (xyz_direction.x*xyz_direction.x) + (xyz_direction.y*xyz_direction.y);
+        if (!peepex_check_peep_notice_thing(curPeep, xyz_direction, distance, 250, 0, 140, 16))
+            continue;
+
+        if (scenario_rand_max(0xFF) > interest)
+            continue;
+
+        log_warning("Watching track from exciting splash!");
+        peepex_made_ride_watcher_vehicle(curPeep, instr->primary_vehicle, true);
     }
 }
 
@@ -267,7 +322,7 @@ uint8 peepex_effective_peep_interest_in_entertainers(rct_peep *peep)
         return 0;
     
     uint32 interest = (peep->peepex_interest_in_misc >> 4);
-    interest *= interest;
+    interest *= 8 + interest / 2;
     return min(interest, 0xFF);
 }
 
@@ -283,7 +338,7 @@ uint8 peepex_effective_peep_interest_in_generic_rides(rct_peep *peep)
         return 0;
     
     uint32 interest = (peep->peepex_interest_in_rides & 0xF);
-    interest *= interest;
+    interest *= 8 + interest / 2;
     return min(interest, 0xFF);
 }
 
@@ -299,7 +354,7 @@ uint8 peepex_effective_peep_interest_in_exciting_rides(rct_peep *peep)
         return 0;
     
     uint32 interest = (peep->peepex_interest_in_rides >> 4);
-    interest *= interest;
+    interest *= 8 + interest / 2;
     return min(interest, 0xFF);
 }
 
@@ -332,7 +387,6 @@ void peepex_update_interest(rct_peep *peep)
         }
         else {
             peep->peepex_flags_consistent |= PEEPEX_CON_FLAG_FLAG_SEEDED_PEEP;
-
             peep->peepex_interest_in_misc   = peepRandA & 0x77;
             peep->peepex_interest_in_rides  = (peepRandA >> 16) & 0x77;
         }
