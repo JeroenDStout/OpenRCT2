@@ -8627,6 +8627,14 @@ sint32 peep_move_one_tile(uint8 direction, rct_peep* peep){
     x += TileDirectionDelta[direction].x;
     y += TileDirectionDelta[direction].y;
 
+        // HACK HACK
+        //  check the tile if it is not wide, change peepex wide flags
+    rct_map_element *elem = map_get_path_element_below_or_at(peep->x / 32, peep->y / 32, peep->z >> 3);
+    if (elem && !footpath_element_is_wide(elem)) {
+        peep->peepex_wide_path_blocker <<= 4;
+        peep->peepex_wide_path_blocker |= (1 << ((direction+2)%4));
+    }
+
     if (x >= 8192 || y >= 8192){
         // This could loop!
         return guest_surface_path_finding(peep);
@@ -10376,9 +10384,8 @@ static sint32 guest_path_finding(rct_peep* peep)
                 adjustedEdges &= ~(1 << chosenDirection);
                 break;
             }
-			if ((0x9 << chosenDirection) & (peep->peepex_wide_path_blocker)) {
+			if ((0x9 << chosenDirection) & (peep->peepex_wide_path_blocker))
 			   adjustedEdges &= ~(1 << chosenDirection);
-			}
         }
         if (adjustedEdges != 0)
             edges = adjustedEdges;
