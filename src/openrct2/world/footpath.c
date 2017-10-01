@@ -1255,12 +1255,49 @@ static void loc_6A6D7E(
                 }
                 break;
             case MAP_ELEMENT_TYPE_ENTRANCE:
-                if (z == mapElement->base_height) {
-                    if (entrance_has_direction(mapElement, ((direction - map_element_get_direction(mapElement)) & MAP_ELEMENT_DIRECTION_MASK) ^ 2)) {
-                        if (query) {
+                if (z == mapElement->base_height)
+                {
+                        // Check if we can connect with an entrance
+
+                    bool allowConnect = false;
+                    uint8 entranceFlags = get_entrance_opening_flags(mapElement);
+
+                    switch (mapElement->properties.entrance.type)
+                    {
+                    case ENTRANCE_TYPE_PARK_ENTRANCE:
+                        allowConnect = entrance_has_direction(mapElement, ((direction - map_element_get_direction(mapElement)) & MAP_ELEMENT_DIRECTION_MASK) ^ 2);
+                        break;
+                    case ENTRANCE_TYPE_RIDE_ENTRANCE:
+                            // Allow a new connexion only if we do not yet have a previous one
+                            //  ATM, entrances cannot have multiple queues.
+                        if (entranceFlags & ((direction + 2) % 4))
+                        {
+                            allowConnect = true;
+                        }
+                        else if (entranceFlags == (1 << map_element_get_direction(mapElement)))
+                        {
+                            allowConnect = true;
+                        }
+                        break;
+                    case ENTRANCE_TYPE_RIDE_EXIT:
+                            // We can always connect to any side of an exit
+                        allowConnect = true;
+                        break;
+                    }
+
+                    if (allowConnect)
+                    {
+                        if (query)
+                        {
                             neighbour_list_push(neighbourList, 8, direction, mapElement->properties.entrance.ride_index,  mapElement->properties.entrance.index);
-                        } else {
-                            if (mapElement->properties.entrance.type != ENTRANCE_TYPE_PARK_ENTRANCE) {
+                        }
+                        else
+                        {
+                            if (mapElement->properties.entrance.type != ENTRANCE_TYPE_PARK_ENTRANCE)
+                            {
+                                    // Modify the entrance flags to enable the current direction
+                                set_entrance_opening_flags(mapElement, entranceFlags | 1 << ((direction + 2) % 4));
+                                map_invalidate_element(x, y, mapElement);
                                 footpath_queue_chain_push(mapElement->properties.entrance.ride_index);
                             }
                         }
@@ -1321,9 +1358,13 @@ static void loc_6A6C85(
         return;
 
     if (map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_ENTRANCE) {
-        if (!entrance_has_direction(mapElement, (direction - mapElement->type) & 3)) {
+            // Only the park entrance connects via the code below, ride entrances
+            //  are updated when they are placed via the paths around them
+        
+        if (mapElement->properties.entrance.type != ENTRANCE_TYPE_PARK_ENTRANCE)
             return;
-        }
+        if (!entrance_has_direction(mapElement, (direction - mapElement->type) & 0x3))
+            return;
     }
 
     if (map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_TRACK) {
@@ -2108,31 +2149,53 @@ static void footpath_remove_edges_towards(sint32 x, sint32 y, sint32 z0, sint32 
     sint32 slope;
 
     mapElement = map_get_first_element_at(x >> 5, y >> 5);
-    do {
+    do
+    {
         if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_PATH)
+        {
+                // If this is an entrance we have to close the side facing the path
+            if (map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_ENTRANCE)
+            {
+                if (z1 != mapElement->base_height)
+                {
+                    continue;
+                }
+                set_entrance_opening_flags(mapElement, get_entrance_opening_flags(mapElement) & ~(1 << ((direction + 2) % 4)));
+            }
             continue;
+        }
 
-        if (z1 == mapElement->base_height) {
-            if (footpath_element_is_sloped(mapElement)) {
+        if (z1 == mapElement->base_height)
+        {
+            if (footpath_element_is_sloped(mapElement))
+            {
                 slope = footpath_element_get_slope_direction(mapElement);
                 if (slope != direction)
+                {
                     break;
+                }
             }
             footpath_remove_edges_towards_here(x, y, z1, direction, mapElement, isQueue);
             break;
         }
-        if (z0 == mapElement->base_height) {
+        if (z0 == mapElement->base_height)
+        {
             if (!footpath_element_is_sloped(mapElement))
+            {
                 break;
+            }
 
             slope = footpath_element_get_slope_direction(mapElement) ^ 2;
             if (slope != direction)
+            {
                 break;
+            }
 
             footpath_remove_edges_towards_here(x, y, z1, direction, mapElement, isQueue);
             break;
         }
-    } while (!map_element_is_last_for_tile(mapElement++));
+    }
+    while (!map_element_is_last_for_tile(mapElement++));
 }
 
 /**
