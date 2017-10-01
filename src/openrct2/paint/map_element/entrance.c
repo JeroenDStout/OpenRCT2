@@ -25,8 +25,204 @@
 #include "../supports.h"
 #include "map_element.h"
 #include "../../drawing/lightfx.h"
+#include "../../sprites.h"
 
 static uint32 _unk9E32BC;
+
+enum
+{
+    ENTRANCE_PART_TYPE_LEFT      = 0,
+    ENTRANCE_PART_TYPE_RIGHT     = 1,
+};
+enum
+{
+    ENTRANCE_LAYER_TYPE_FRONT    = 0,
+    ENTRANCE_LAYER_TYPE_MIDDLE   = 1,
+    ENTRANCE_LAYER_TYPE_BACK     = 2
+};
+enum
+{
+    ENTRANCE_DOORWAY_TYPE_CLOSED = 0,
+    ENTRANCE_DOORWAY_TYPE_PATH   = 1,
+    ENTRANCE_DOORWAY_TYPE_TRACK  = 2
+};
+
+enum
+{
+    ENTRANCE_SPRITE_FRONT_SPRITE_CCXX   = 0,
+    ENTRANCE_SPRITE_FRONT_SPRITE_CPXX   = 2,
+    ENTRANCE_SPRITE_FRONT_SPRITE_CTXX   = 4,
+    ENTRANCE_SPRITE_FRONT_SPRITE_PCXX   = 6,
+    ENTRANCE_SPRITE_FRONT_SPRITE_PPXX   = 8,
+    ENTRANCE_SPRITE_FRONT_SPRITE_PTXX   = 10,
+    ENTRANCE_SPRITE_FRONT_SPRITE_TCXX   = 12,
+    ENTRANCE_SPRITE_FRONT_SPRITE_TPXX   = 14,
+
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_PCXC  = 16,
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_POXO  = 17,
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_TCXC  = 18,
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_TOXO  = 19,
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_CPCX  = 20,
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_OPOX  = 21,
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_CTCX  = 22,
+    ENTRANCE_SPRITE_MIDDLE_SPRITE_OTOX  = 23,
+    
+        // For non-transparent sprites, we do not have any backdrop
+        //  for when both front sides are closed
+    ENTRANCE_SPRITE_BACK_SPRITE_OCCC    = 24,
+    ENTRANCE_SPRITE_BACK_SPRITE_COCC    = 25,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOCC    = 26,
+    ENTRANCE_SPRITE_BACK_SPRITE_OCOC    = 27,
+    ENTRANCE_SPRITE_BACK_SPRITE_COOC    = 28,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOOC    = 29,
+    ENTRANCE_SPRITE_BACK_SPRITE_OCCO    = 30,
+    ENTRANCE_SPRITE_BACK_SPRITE_COCO    = 31,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOCO    = 32,
+    ENTRANCE_SPRITE_BACK_SPRITE_OCOO    = 33,
+    ENTRANCE_SPRITE_BACK_SPRITE_COOO    = 34,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOOO    = 35,
+    
+        // For transparent sprite we store the 3 extra sprites needed
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OCCC  = 24,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_COCC  = 25,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OOCC  = 26,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_CCOC  = 27,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OCOC  = 28,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_COOC  = 29,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OOOC  = 30,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_CCCO  = 31,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OCCO  = 32,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_COCO  = 33,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OOCO  = 34,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_CCOO  = 35,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OCOO  = 36,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_COOO  = 37,
+    ENTRANCE_SPRITE_BACK_T_SPRITE_OOOO  = 38,
+
+    ENTRANCE_SPRITE_SET_COUNT_REGULAR     = 36,
+    ENTRANCE_SPRITE_SET_COUNT_TRANSPARENT = 39,
+
+    ENTRANCE_SPRITE_NONE                  = 0xFFFFFFFF
+};
+
+const uint32 entrance_sprite_id_front_offsets[3][3][2] =
+{
+    {
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_CCXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_CCXX + 1 },
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_CPXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_CPXX + 1 },
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_CTXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_CTXX + 1 }
+    },
+    {
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_PCXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_PCXX + 1 },
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_PPXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_PPXX + 1 },
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_PTXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_PTXX + 1 }
+    },
+    {
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_TCXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_TCXX + 1 },
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_TPXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_TPXX + 1 },
+        {  ENTRANCE_SPRITE_FRONT_SPRITE_TPXX + 0,  ENTRANCE_SPRITE_FRONT_SPRITE_PTXX + 1 }
+    }
+};
+
+const uint32 entrance_sprite_id_middle_offsets[2][3][2] =
+{
+    {
+        {  ENTRANCE_SPRITE_NONE,               ENTRANCE_SPRITE_NONE               },
+        {  ENTRANCE_SPRITE_MIDDLE_SPRITE_PCXC, ENTRANCE_SPRITE_MIDDLE_SPRITE_POXO },    
+        {  ENTRANCE_SPRITE_MIDDLE_SPRITE_TCXC, ENTRANCE_SPRITE_MIDDLE_SPRITE_TOXO }
+    },
+    {
+        {  ENTRANCE_SPRITE_NONE,               ENTRANCE_SPRITE_NONE               },
+        {  ENTRANCE_SPRITE_MIDDLE_SPRITE_CPCX, ENTRANCE_SPRITE_MIDDLE_SPRITE_OPOX },
+        {  ENTRANCE_SPRITE_MIDDLE_SPRITE_CTCX, ENTRANCE_SPRITE_MIDDLE_SPRITE_OTOX }
+    }
+};
+
+const uint32 entrance_sprite_id_back_offsets[16] =
+{
+    ENTRANCE_SPRITE_NONE,
+    ENTRANCE_SPRITE_BACK_SPRITE_OCCC,
+    ENTRANCE_SPRITE_BACK_SPRITE_COCC,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOCC,
+    ENTRANCE_SPRITE_NONE,
+    ENTRANCE_SPRITE_BACK_SPRITE_OCOC,
+    ENTRANCE_SPRITE_BACK_SPRITE_COOC,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOOC,
+    ENTRANCE_SPRITE_NONE,
+    ENTRANCE_SPRITE_BACK_SPRITE_OCCO,
+    ENTRANCE_SPRITE_BACK_SPRITE_COCO,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOCO,
+    ENTRANCE_SPRITE_NONE,
+    ENTRANCE_SPRITE_BACK_SPRITE_OCOO,
+    ENTRANCE_SPRITE_BACK_SPRITE_COOO,
+    ENTRANCE_SPRITE_BACK_SPRITE_OOOO
+};
+
+static uint32 ride_entrance_base_image_id_from_style(uint8 style)
+{
+        // ignore style for now
+    return SPR_G2_ENTRANCES_PLAIN_ENTRANCE_FRONT_C_C;
+}
+
+static uint32 ride_entrance_front_image_id_from_situation(uint8 style, bool entrance, uint8 part, uint8 doorwayNearLeft, uint8 doorwayNearRight, uint8 doorwayFarLeft, uint8 doorwayFarRight)
+{
+    uint32 base = ride_entrance_base_image_id_from_style(style);
+    uint32 offset = entrance_sprite_id_front_offsets[doorwayNearLeft][doorwayNearRight][part];
+    if (offset == ENTRANCE_SPRITE_NONE)
+        return 0;
+    return base + offset + (entrance? 0 : ENTRANCE_SPRITE_SET_COUNT_REGULAR);
+}
+
+static uint32 ride_entrance_middle_image_id_from_situation(uint8 style, bool entrance, uint8 part, uint8 doorwayNearLeft, uint8 doorwayNearRight, uint8 doorwayFarLeft, uint8 doorwayFarRight)
+{
+    uint8 doorwayNear;
+    uint8 doorwayOpposites = ENTRANCE_DOORWAY_TYPE_CLOSED;
+
+    if (part == ENTRANCE_PART_TYPE_LEFT)
+    {
+        if (doorwayFarLeft == ENTRANCE_DOORWAY_TYPE_CLOSED)
+        {
+            return 0;
+        }
+        doorwayNear     = doorwayNearLeft;
+        if (doorwayNearRight != ENTRANCE_DOORWAY_TYPE_CLOSED || doorwayFarRight != ENTRANCE_DOORWAY_TYPE_CLOSED)
+        {
+           doorwayOpposites = ENTRANCE_DOORWAY_TYPE_PATH;
+        }
+    }
+    else
+    {
+        if (doorwayFarRight == ENTRANCE_DOORWAY_TYPE_CLOSED)
+        {
+            return 0;
+        }
+        doorwayNear     = doorwayNearRight;
+        if (doorwayNearLeft != ENTRANCE_DOORWAY_TYPE_CLOSED || doorwayNearLeft != ENTRANCE_DOORWAY_TYPE_CLOSED)
+        {
+           doorwayOpposites = ENTRANCE_DOORWAY_TYPE_PATH;
+        }
+    }
+
+    uint32 base = ride_entrance_base_image_id_from_style(style);
+    uint32 offset = entrance_sprite_id_middle_offsets[part][doorwayNear][doorwayOpposites];
+    if (offset == 0xFFFFFFFF)
+        return 0;
+    return base + offset + (entrance? 0 : ENTRANCE_SPRITE_SET_COUNT_REGULAR);
+}
+
+static uint32 ride_entrance_back_image_id_from_situation(uint8 style, bool entrance, uint8 doorwayNearLeft, uint8 doorwayNearRight, uint8 doorwayFarLeft, uint8 doorwayFarRight)
+{
+    uint32 base = ride_entrance_base_image_id_from_style(style);
+    uint32 offset = entrance_sprite_id_back_offsets[    ((doorwayNearLeft  != ENTRANCE_DOORWAY_TYPE_CLOSED)? 1 : 0) |
+                                                        ((doorwayNearRight != ENTRANCE_DOORWAY_TYPE_CLOSED)? 2 : 0) |
+                                                        ((doorwayFarLeft   != ENTRANCE_DOORWAY_TYPE_CLOSED)? 4 : 0) |
+                                                        ((doorwayFarRight  != ENTRANCE_DOORWAY_TYPE_CLOSED)? 8 : 0)   ];
+    if (offset == ENTRANCE_SPRITE_NONE)
+        return 0;
+    return base + offset + (entrance? 0 : ENTRANCE_SPRITE_SET_COUNT_REGULAR);
+}
+
+
 
 /**
  *
@@ -34,8 +230,11 @@ static uint32 _unk9E32BC;
  */
 static void ride_entrance_exit_paint(paint_session * session, uint8 direction, sint32 height, rct_map_element* map_element)
 {
-
+    uint8 edges = get_entrance_opening_flags(map_element);
     uint8 is_exit = map_element->properties.entrance.type == ENTRANCE_TYPE_RIDE_EXIT;
+
+        // we override standard direction code from here on
+    direction = 0;
 
     if (gTrackDesignSaveMode) {
         if (map_element->properties.entrance.ride_index != gTrackDesignSaveRideIndex)
@@ -43,7 +242,7 @@ static void ride_entrance_exit_paint(paint_session * session, uint8 direction, s
     }
 
 #ifdef __ENABLE_LIGHTFX__
-    if (lightfx_is_available()) {
+    if (gConfigGeneral.enable_light_fx) {
         if (!is_exit) {
             lightfx_add_3d_light_magic_from_drawing_tile(session->MapPosition, 0, 0, height + 45, LIGHTFX_LIGHT_TYPE_LANTERN_3);
         }
