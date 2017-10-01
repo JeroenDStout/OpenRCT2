@@ -411,6 +411,9 @@ static money32 RideEntranceExitPlace(sint16 x,
             mapElement->properties.entrance.ride_index = rideIndex;
             mapElement->type = MAP_ELEMENT_TYPE_ENTRANCE | direction;
 
+                // set our bits for the sides which are open
+            set_entrance_opening_flags(mapElement, 1 << direction);
+
             if (flags & GAME_COMMAND_FLAG_GHOST)
             {
                 mapElement->flags |= MAP_ELEMENT_FLAG_GHOST;
