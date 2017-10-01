@@ -1598,14 +1598,46 @@ void footpath_update_queue_chains()
             uint8 z = ride->station_heights[i];
 
             rct_map_element *mapElement = map_get_first_element_at(x, y);
-            do {
-                if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_ENTRANCE) continue;
-                if (mapElement->base_height != z) continue;
-                if (mapElement->properties.entrance.type != ENTRANCE_TYPE_RIDE_ENTRANCE) continue;
+            do
+            {
+                if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_ENTRANCE)
+                {
+                    continue;
+                }
+                if (mapElement->base_height != z)
+                {
+                    continue;
+                }
+                if (mapElement->properties.entrance.type != ENTRANCE_TYPE_RIDE_ENTRANCE)
+                {
+                    continue;
+                }
+                
+                    // Check if the entrance has openings in any direction which is not towards the ride.
 
-                uint8 direction = map_element_get_direction_with_offset(mapElement, 2);
+                uint8 direction;
+                uint8 edges = get_entrance_opening_flags(mapElement) & ~(1 << map_element_get_direction(mapElement));
+                switch (edges) {
+                default:
+                        // this shouldn't happen, so set it to the default direction
+                    direction = map_element_get_direction_with_offset(mapElement, 2);
+                    break;
+                case 1:
+                    direction = 0;
+                    break;
+                case 2:
+                    direction = 1;
+                    break;
+                case 4:
+                    direction = 2;
+                    break;
+                case 8:
+                    direction = 3;
+                    break;
+                }
                 footpath_chain_ride_queue(rideIndex, i, x << 5, y << 5, mapElement, direction);
-            } while (!map_element_is_last_for_tile(mapElement++));
+            }
+            while (!map_element_is_last_for_tile(mapElement++));
         }
     }
 }
