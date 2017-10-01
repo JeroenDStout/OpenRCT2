@@ -268,9 +268,12 @@ static void ride_entrance_exit_paint(paint_session * session, uint8 direction, s
     if (ride->entrance_style == RIDE_ENTRANCE_STYLE_NONE) return;
 
     const rct_ride_entrance_definition *style = &RideEntranceDefinitions[ride->entrance_style];
+    
+    uint32 image_id = 0;
+    uint32 image_modifiers = 0;
 
     uint8 colour_1, colour_2;
-    uint32 transparant_image_id = 0, image_id = 0;
+    uint32 transparant_image_id = 0;
     if (style->base_image_id & IMAGE_TYPE_TRANSPARENT) {
         colour_1 = GlassPaletteIds[ride->track_colour_main[0]];
         transparant_image_id = (colour_1 << 19) | IMAGE_TYPE_TRANSPARENT;
@@ -278,62 +281,123 @@ static void ride_entrance_exit_paint(paint_session * session, uint8 direction, s
 
     colour_1 = ride->track_colour_main[0];
     colour_2 = ride->track_colour_additional[0];
-    image_id = (colour_1 << 19) | (colour_2 << 24) | IMAGE_TYPE_REMAP | IMAGE_TYPE_REMAP_2_PLUS;
+    image_modifiers = (colour_1 << 19) | (colour_2 << 24) | IMAGE_TYPE_REMAP | IMAGE_TYPE_REMAP_2_PLUS;
 
     session->InteractionType = VIEWPORT_INTERACTION_ITEM_RIDE;
     _unk9E32BC = 0;
 
-    if (map_element->flags & MAP_ELEMENT_FLAG_GHOST){
-        session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
-        image_id = construction_markers[gConfigGeneral.construction_marker_colour];
-        _unk9E32BC = image_id;
-        if (transparant_image_id)
-            transparant_image_id = image_id;
-    }
+    //if (map_element->flags & MAP_ELEMENT_FLAG_GHOST){
+    //    session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
+    //    image_id = construction_markers[gConfigGeneral.construction_marker_colour];
+    //    _unk9E32BC = image_id;
+    //    if (transparant_image_id)
+    //        transparant_image_id = image_id;
+    //}
 
-    if (is_exit){
-        image_id |= style->sprite_index + direction + 8;
-    }
-    else{
-        image_id |= style->sprite_index + direction;
-    }
+    //if (is_exit){
+    //    image_id |= style->sprite_index + direction + 8;
+    //}
+    //else{
+    //    image_id |= style->sprite_index + direction;
+    //}
     // Format modified to stop repeated code
 
     // Each entrance is split into 2 images for drawing
     // Certain entrance styles have another 2 images to draw for coloured windows
 
-    sint8 ah = is_exit ? 0x23 : 0x33;
+    sint8 effectiveHeight = is_exit ? 0x23 : 0x33;
 
-    sint16 lengthY = (direction & 1) ? 28 : 2;
-    sint16 lengthX = (direction & 1) ? 2 : 28;
+    uint8 typeOnNearLeft     = ENTRANCE_DOORWAY_TYPE_CLOSED;
+    uint8 typeOnNearRight    = ENTRANCE_DOORWAY_TYPE_CLOSED;
+    uint8 typeOnFarLeft      = ENTRANCE_DOORWAY_TYPE_CLOSED;
+    uint8 typeOnFarRight     = ENTRANCE_DOORWAY_TYPE_CLOSED;
+    
+    typeOnNearLeft      = (edges & (1 << ((6 - get_current_rotation()) % 4)))? ENTRANCE_DOORWAY_TYPE_PATH : ENTRANCE_DOORWAY_TYPE_CLOSED;
+    typeOnNearRight     = (edges & (1 << ((5 - get_current_rotation()) % 4)))? ENTRANCE_DOORWAY_TYPE_PATH : ENTRANCE_DOORWAY_TYPE_CLOSED;
+    typeOnFarLeft       = (edges & (1 << ((7 - get_current_rotation()) % 4)))? ENTRANCE_DOORWAY_TYPE_PATH : ENTRANCE_DOORWAY_TYPE_CLOSED;
+    typeOnFarRight      = (edges & (1 << ((4 - get_current_rotation()) % 4)))? ENTRANCE_DOORWAY_TYPE_PATH : ENTRANCE_DOORWAY_TYPE_CLOSED;
 
-    sub_98197C(session, image_id, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
+    switch (map_element_get_direction_with_offset(map_element, 2 + get_current_rotation()))
+    {
+    case 0:
+        typeOnNearLeft      = ENTRANCE_DOORWAY_TYPE_TRACK;
+        break;
+    case 1:
+        typeOnFarLeft       = ENTRANCE_DOORWAY_TYPE_TRACK;
+        break;
+    case 2:
+        typeOnFarRight      = ENTRANCE_DOORWAY_TYPE_TRACK;
+        break;
+    case 3:
+        typeOnNearRight     = ENTRANCE_DOORWAY_TYPE_TRACK;
+        break;
+    }
+    
+        // Render interior when the element is open
 
-    if (transparant_image_id){
-        if (is_exit){
-            transparant_image_id |= style->sprite_index + direction + 24;
-        }
-        else{
-            transparant_image_id |= style->sprite_index + direction + 16;
-        }
+    //if (showOpenLeft)
+    //    sub_98197C(session, image_id+0, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
+    //if (showOpenRight)
+    //    sub_98197C(session, image_id+3, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
 
-        sub_98199C(session, transparant_image_id, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
+    //if (transparant_image_id){
+    //    if (is_exit){
+    //        transparant_image_id |= style->sprite_index + direction + 24;
+    //    }
+    //    else{
+    //        transparant_image_id |= style->sprite_index + direction + 16;
+    //    }
+
+    //    sub_98199C(session, transparant_image_id, 0, 0, lengthX, lengthY, ah, height, 2, 2, height, get_current_rotation());
+    //}
+
+    //image_id += 4;
+
+    //log_warning("%i %i %i %i", typeOnNearLeft, typeOnNearRight, typeOnFarLeft, typeOnFarRight);
+
+        // Back
+    image_id = ride_entrance_back_image_id_from_situation(ride->entrance_style, !is_exit, typeOnNearLeft, typeOnNearRight, typeOnFarLeft, typeOnFarRight);
+    if (image_id != 0)
+    {
+        sub_98197C(session, image_id | image_modifiers, 0, 0, 0, 0, effectiveHeight, height, 2, 2, height, get_current_rotation());
     }
 
-    image_id += 4;
-
-    sub_98197C(session, image_id, 0, 0, lengthX, lengthY, ah, height, (direction & 1) ? 28 : 2, (direction & 1) ? 2 : 28, height, get_current_rotation());
-
-    if (transparant_image_id){
-        transparant_image_id += 4;
-        sub_98199C(session, transparant_image_id, 0, 0, lengthX, lengthY, ah, height, (direction & 1) ? 28 : 2, (direction & 1) ? 2 : 28, height, get_current_rotation());
+        // Middle
+    image_id = ride_entrance_middle_image_id_from_situation(ride->entrance_style, !is_exit, ENTRANCE_PART_TYPE_LEFT, typeOnNearLeft, typeOnNearRight, typeOnFarLeft, typeOnFarRight);
+    if (image_id != 0)
+    {
+        sub_98197C(session, image_id | image_modifiers, 0, 0, 23, 2, effectiveHeight, height, 8, 8, height, get_current_rotation());
+    }
+    image_id = ride_entrance_middle_image_id_from_situation(ride->entrance_style, !is_exit, ENTRANCE_PART_TYPE_RIGHT, typeOnNearLeft, typeOnNearRight, typeOnFarLeft, typeOnFarRight);
+    if (image_id != 0)
+    {
+        sub_98197C(session, image_id | image_modifiers, 0, 0, 2, 23, effectiveHeight, height, 8, 8, height, get_current_rotation());
     }
 
-    if (direction & 1) {
-        paint_util_push_tunnel_right(session, height, TUNNEL_6);
-    } else {
-        paint_util_push_tunnel_left(session, height, TUNNEL_6);
+    //    // Front
+    image_id = ride_entrance_front_image_id_from_situation(ride->entrance_style, !is_exit, ENTRANCE_PART_TYPE_LEFT, typeOnNearLeft, typeOnNearRight, typeOnFarLeft, typeOnFarRight);
+    if (image_id != 0)
+    {
+        sub_98197C(session, image_id | image_modifiers, 0, 0, 31, 1, effectiveHeight, height, 1, 29, height, get_current_rotation());
     }
+    image_id = ride_entrance_front_image_id_from_situation(ride->entrance_style, !is_exit, ENTRANCE_PART_TYPE_RIGHT, typeOnNearLeft, typeOnNearRight, typeOnFarLeft, typeOnFarRight);
+    if (image_id != 0)
+    {
+        sub_98197C(session, image_id | image_modifiers, 0, 0, 1, 31, effectiveHeight, height, 29, 1, height, get_current_rotation());
+    }
+
+    //if (transparant_image_id){
+    //    transparant_image_id += 4;
+    //    sub_98199C(session, transparant_image_id, 0, 0, lengthX, lengthY, ah, height, (direction & 1) ? 28 : 2, (direction & 1) ? 2 : 28, height, get_current_rotation());
+    //}
+
+        // TODO: Tunnels are broken for now
+
+    //if (direction & 1) {
+    //    paint_util_push_tunnel_right(session, height, TUNNEL_6);
+    //} else {
+    //    paint_util_push_tunnel_left(session, height, TUNNEL_6);
+    //}
 
     if (!is_exit &&
         !(map_element->flags & MAP_ELEMENT_FLAG_GHOST) &&
