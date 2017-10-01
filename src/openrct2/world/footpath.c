@@ -134,6 +134,32 @@ rct_map_element *map_get_footpath_element(sint32 x, sint32 y, sint32 z)
     return NULL;
 }
 
+    /*   Returns the first footpath at the xy that is not higher than z.
+     */
+
+rct_map_element *map_get_footpath_element_at_or_under(sint32 x, sint32 y, sint32 z)
+{
+    rct_map_element *mapElement;
+    rct_map_element *returnElement = 0;
+
+    mapElement = map_get_first_element_at(x, y);
+    do
+    {
+        if (mapElement->base_height > z)
+        {
+            break;
+        }
+        if (map_element_get_type(mapElement) != MAP_ELEMENT_TYPE_PATH)
+        {
+            continue;
+        }
+        returnElement = mapElement;
+    }
+    while (!map_element_is_last_for_tile(mapElement++));
+
+    return returnElement;
+}
+
 static rct_map_element *map_get_footpath_element_slope(sint32 x, sint32 y, sint32 z, sint32 slope)
 {
     rct_map_element *mapElement;
