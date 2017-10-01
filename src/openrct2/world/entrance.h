@@ -56,6 +56,9 @@ void reset_park_entrance();
 void maze_entrance_hedge_replacement(sint32 x, sint32 y, rct_map_element *mapElement);
 void maze_entrance_hedge_removal(sint32 x, sint32 y, rct_map_element *mapElement);
 
+uint8 get_entrance_opening_flags(rct_map_element *mapElement);
+void set_entrance_opening_flags(rct_map_element *mapElement, uint8);
+
 #ifdef __cplusplus
 }
 #endif

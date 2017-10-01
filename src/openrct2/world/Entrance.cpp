@@ -860,3 +860,14 @@ extern "C"
         } while (!map_element_is_last_for_tile(mapElement++));
     }
 }
+
+uint8 get_entrance_opening_flags(rct_map_element *mapElement)
+{
+    return mapElement->properties.entrance.index & 0xF;
+}
+
+void set_entrance_opening_flags(rct_map_element *mapElement, uint8 flags)
+{
+    mapElement->properties.entrance.index   &= ~0xF;
+    mapElement->properties.entrance.index   |= (flags) & 0xF;
+}
