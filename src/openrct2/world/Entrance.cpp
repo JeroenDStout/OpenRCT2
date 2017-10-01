@@ -441,7 +441,23 @@ static money32 RideEntranceExitPlace(sint16 x,
                 maze_entrance_hedge_removal(x, y, mapElement);
             }
 
-            footpath_connect_edges(x, y, mapElement, flags);
+                // For all three possible adjacent squares, try to connect the footpaths
+                //  we do it in this order so entrances (not exits) will prefer to connect
+                //  to squares opposite to them.
+            sint16 connectOrder[3] = { 2, 3, 1 };
+            sint16 nX, nY;
+            for (uint32 i = 0; i < 3; i++)
+            {
+                rct_map_element* pathElement;
+                nX = x + TileDirectionDelta[(direction + connectOrder[i]) % 4].x;
+                nY = y + TileDirectionDelta[(direction + connectOrder[i]) % 4].y;
+                pathElement = map_get_footpath_element_at_or_under(nX >> 5, nY >> 5, mapElement->base_height);
+                if (pathElement)
+                {
+                    footpath_connect_edges(nX, nY, pathElement, flags);
+                }
+            }
+
             footpath_update_queue_chains();
 
             map_invalidate_tile_full(x, y);
