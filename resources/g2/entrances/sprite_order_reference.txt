@@ -1,0 +1,33 @@
+	FRONT LAYER
+
+		 F-L    F-R    B-L    B-R
+ 0,  1: closed closed -      -
+ 2,  3: closed path   -      -
+ 4,  5: closed track  -      -
+ 6,  7: path   closed -      -
+ 8,  9: path   path   -      -
+10, 11: path   track  -      -
+12, 13: track  closed -      -
+14, 15: track  path   -      -
+ -   -  track  track  -      -
+	  
+	MIDDLE LAYER
+
+16,  -: path   closed -      closed
+17,  -: path   open   -      open
+18,  -: track  closed -      closed
+19,  -: track  open   -      open
+ -, 20: closed path   closed -
+ -, 21: open   path   open   -
+ -, 22: closed track  closed -
+ -, 23: open   track  open   -
+	  
+	BACK LAYER
+	
+24,  -: open   closed closed closed
+25,  -: open   closed open   closed
+26,  -: open   open   closed open
+ -, 27: closed open   closed closed
+ -, 28: open   open   open   closed
+ -, 29: closed open   closed open
+[ 30 ]: open   open   open   open
