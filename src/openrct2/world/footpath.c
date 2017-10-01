@@ -118,7 +118,10 @@ static void automatically_set_peep_spawn(sint32 x, sint32 y, sint32 z)
     peepSpawn->z = z;
 }
 
-static rct_map_element *map_get_footpath_element(sint32 x, sint32 y, sint32 z)
+    /*   Returns the first footpath at the xy that is equal to z.
+     */
+
+rct_map_element *map_get_footpath_element(sint32 x, sint32 y, sint32 z)
 {
     rct_map_element *mapElement;
 

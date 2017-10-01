@@ -116,6 +116,7 @@ bool footpath_element_path_scenery_is_ghost(rct_map_element *mapElement);
 void footpath_scenery_set_is_ghost(rct_map_element *mapElement, bool isGhost);
 void footpath_remove_edges_at(sint32 x, sint32 y, rct_map_element *mapElement);
 sint32 entrance_get_directions(rct_map_element *mapElement);
+rct_map_element *map_get_footpath_element(sint32 x, sint32 y, sint32 z);
 
 rct_footpath_entry *get_footpath_entry(sint32 entryIndex);
 
