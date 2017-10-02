@@ -1,4 +1,5 @@
 version: 0.1.2.{build}
+shallow_clone: false
 image:
 #  - Visual Studio 2015
   - Visual Studio 2017
