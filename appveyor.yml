@@ -33,7 +33,7 @@ artifacts:
 - path: .\artifacts\openrct2-symbols*.zip
   name: OpenRCT2 debug symbols
 deploy:
-  release: peepex-v$(appveyor_build_version)
+  release: peepex-$(platform)-v$(appveyor_build_version)
   description: 'Peepex Play'
   provider: GitHub
   auth_token:
