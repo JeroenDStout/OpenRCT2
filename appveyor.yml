@@ -34,3 +34,16 @@ artifacts:
 deploy_script:
 - ps: >-
     .\scripts\ps\appveyor_deploy.ps1
+deploy:
+  release: peepex-v$(appveyor_build_version)
+  description: 'Peepex test'
+  provider: GitHub
+  auth_token:
+    secure: Y0N8XLUkpqKSlr0l9P3DDIn3aJ8CG4kX/Jl1Y7XmkOGKHRe8xFmwFe2bn27BDTFS
+  artifact: .\artifacts\openrct2-portable*.zip
+  draft: false
+  prerelease: false
+  on:
+    branch: stout-peep-test
+    appveyor_repo_tag: true
+	
