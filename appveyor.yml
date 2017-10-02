@@ -45,4 +45,3 @@ deploy:
   prerelease: false
   on:
     branch: stout-peep-test
-    appveyor_repo_tag: true
