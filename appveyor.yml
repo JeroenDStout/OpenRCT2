@@ -38,7 +38,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: Y0N8XLUkpqKSlr0l9P3DDIn3aJ8CG4kX/Jl1Y7XmkOGKHRe8xFmwFe2bn27BDTFS
-  artifact: .\artifacts\openrct2-portable*.zip
+  artifact: OpenRCT2-portable
   draft: false
   prerelease: false
   on:
