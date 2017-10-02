@@ -34,7 +34,7 @@ artifacts:
   name: OpenRCT2 debug symbols
 deploy:
   release: peepex-v$(appveyor_build_version)
-  description: 'Peepex test'
+  description: 'Peepex Play'
   provider: GitHub
   auth_token:
     secure: Y0N8XLUkpqKSlr0l9P3DDIn3aJ8CG4kX/Jl1Y7XmkOGKHRe8xFmwFe2bn27BDTFS
@@ -42,4 +42,4 @@ deploy:
   draft: false
   prerelease: false
   on:
-    branch: stout-peep-test
+    branch: Peepex_Play
