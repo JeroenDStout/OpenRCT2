@@ -42,4 +42,4 @@ deploy:
   draft: false
   prerelease: false
   on:
-    branch: Peepex_Play
+    branch: stout-peep-test
