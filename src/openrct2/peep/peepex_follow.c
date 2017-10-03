@@ -446,9 +446,7 @@ void peepex_pathing_hint(peepex_pathing_hint_instr* instr)
 
 bool peepex_find_connected_path(rct_peep *peep, rct_map_element *element, sint16 x, sint16 y, uint8 direction, sint16 *nextZ)
 {
-    log_warning("try %i %i", x >> 5, y >> 5);
     if (!(element->properties.path.edges & (1 << direction))) {
-        log_warning("fail");
         return false;
     }
 
