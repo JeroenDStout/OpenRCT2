@@ -547,7 +547,7 @@ typedef struct rct_peep {
             uint8 current_ride_station;     // 0x69
             uint8 current_train;            // 0x6A
         };
-        uint16 peepex_reserved_temp_0;
+        rct_xy8 peepex_interest_location;
     };
     union{
         struct{
