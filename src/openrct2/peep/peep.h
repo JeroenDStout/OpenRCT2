@@ -547,7 +547,7 @@ typedef struct rct_peep {
             uint8 current_ride_station;     // 0x69
             uint8 current_train;            // 0x6A
         };
-        rct_xy8 peepex_interest_location;
+        uint16 peepex_reserved_temp_0;
     };
     union{
         struct{
@@ -573,10 +573,11 @@ typedef struct rct_peep {
         uint16 var_74; // time getting to ride to fix
         uint16 next_in_queue;       // 0x74
     };
-    uint8 var_76;
+    uint8 peepex_reserved_3;
     union {
         uint8 peepex_wide_path_blocker;
         uint8 peepex_vehicle_excitement;
+        uint8 enter_entrance_counter;
     };
     union{
         uint8 maze_last_edge;           // 0x78
@@ -591,7 +592,7 @@ typedef struct rct_peep {
     money32 cash_in_pocket;         // 0xA0
     money32 cash_spent;             // 0xA4
     sint32 time_in_park;            // 0xA8
-    sint8 var_AC;                   // 0xAC
+    sint8 peepex_reserved_2;        // 0xAC
     uint8 previous_ride;            // 0xAD
     uint16 previous_ride_time_out;  // 0xAE
     rct_peep_thought thoughts[PEEP_MAX_THOUGHTS];   // 0xB0
@@ -621,7 +622,10 @@ typedef struct rct_peep {
     // 0x3F Sick Count split into lots of 3 with time, 0xC0 Time since last recalc
     uint8 disgusting_count;         // 0xE3
     union{
-        money16 paid_to_enter;          // 0xE4
+        struct {                    // 0xE4
+            uint8 peepex_crime_acceptivity; 
+            sint8 peepex_crime_running_assessment;
+        };
         uint16 staff_lawns_mown;        // 0xE4
         uint16 staff_rides_fixed;       // 0xE4
     };

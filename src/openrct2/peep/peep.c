@@ -2439,7 +2439,7 @@ static void peep_go_to_ride_entrance(rct_peep* peep, Ride* ride){
     peep->sub_state = 1;
     peep_window_state_update(peep);
 
-    peep->var_AC = 0;
+    peep->enter_entrance_counter = 0;
     peep->time_on_ride = 0;
 
     remove_peep_from_queue(peep);
@@ -2986,7 +2986,7 @@ static void peep_update_ride_sub_state_2(rct_peep* peep){
     if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_NO_VEHICLES)){
         if (ride->status != RIDE_STATUS_OPEN ||
             ride->vehicle_change_timeout != 0 ||
-            (++peep->var_AC) == 0){
+            (++peep->enter_entrance_counter) == 0){
 
             peep_update_ride_sub_state_2_rejoin_queue(peep, ride);
             return;
@@ -3048,7 +3048,7 @@ static void peep_update_ride_sub_state_2(rct_peep* peep){
 
     rct_vehicle *currentTrain = GET_VEHICLE(ride->vehicles[peep->current_train]);
     if (ride->status == RIDE_STATUS_OPEN &&
-        ++peep->var_AC != 0 &&
+        ++peep->enter_entrance_counter != 0 &&
         !(currentTrain->update_flags & VEHICLE_UPDATE_FLAG_TRAIN_READY_DEPART)){
         return;
     }
@@ -5217,7 +5217,6 @@ static void peep_update_1(rct_peep* peep){
     peep->destination_x = peep->x;
     peep->destination_y = peep->y;
     peep->destination_tolerence = 10;
-    peep->var_76 = 0;
     peep->direction = peep->sprite_direction >> 3;
 }
 
@@ -7328,7 +7327,6 @@ rct_peep *peep_generate(sint32 x, sint32 y, sint32 z)
     peep->litter_count = 0;
     peep->disgusting_count = 0;
     peep->var_EF = 0;
-    peep->paid_to_enter = 0;
     peep->paid_on_rides = 0;
     peep->paid_on_food = 0;
     peep->paid_on_drink = 0;
@@ -8264,7 +8262,6 @@ static sint32 peep_interact_with_entrance(rct_peep* peep, sint16 x, sint16 y, rc
 
             gTotalIncomeFromAdmissions += entranceFee;
             gCommandExpenditureType = RCT_EXPENDITURE_TYPE_PARK_ENTRANCE_TICKETS;
-            peep_spend_money(peep, &peep->paid_to_enter, entranceFee);
             peep->peep_flags |= PEEP_FLAGS_HAS_PAID_FOR_PARK_ENTRY;
         }
 

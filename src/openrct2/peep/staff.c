@@ -244,7 +244,6 @@ static money32 staff_hire_new_staff_member(uint8 staff_type, uint8 flags, sint16
             newPeep->type = PEEP_TYPE_STAFF;
             newPeep->outside_of_park = 0;
             newPeep->peep_flags = 0;
-            newPeep->paid_to_enter = 0;
             newPeep->paid_on_rides = 0;
             newPeep->paid_on_food = 0;
             newPeep->paid_on_souvenirs = 0;
