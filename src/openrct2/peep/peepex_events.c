@@ -300,66 +300,6 @@ peepex_event_broadcast_instr create_peepex_event_broadcast_instr()
     return instr;
 }
 
-uint8 peepex_effective_peep_interest_in_generic_events(rct_peep *peep)
-{
-        // these peeps would not be available for activities
-    if (peep->state != PEEP_STATE_WALKING &&
-        peep->state != PEEP_STATE_PATROLLING)
-        return 0;
-
-        // this peep is on a cooldown
-    if (peep->peepex_event_countdown > 0)
-        return 0;
-    
-    return (peep->peepex_interest_in_misc & 0xF) << 3;
-}
-
-uint8 peepex_effective_peep_interest_in_entertainers(rct_peep *peep)
-{
-        // these peeps would not be available for activities
-    if (peep->state != PEEP_STATE_WALKING &&
-        peep->state != PEEP_STATE_PATROLLING)
-        return 0;
-    
-    uint32 interest = (peep->peepex_interest_in_misc >> 4);
-    interest *= 8 + interest / 2;
-    return min(interest, 0xFF);
-}
-
-uint8 peepex_effective_peep_interest_in_generic_rides(rct_peep *peep)
-{
-        // these peeps would not be available for activities
-    if (peep->state != PEEP_STATE_WALKING &&
-        peep->state != PEEP_STATE_PATROLLING)
-        return 0;
-
-        // this peep is on a cooldown
-    if (peep->peepex_event_countdown > 0)
-        return 0;
-    
-    uint32 interest = (peep->peepex_interest_in_rides & 0xF);
-    interest *= interest;
-    interest >>= 4;
-    interest *= (8 + interest / 2) * 2;
-    return min(interest, 0xFF);
-}
-
-uint8 peepex_effective_peep_interest_in_exciting_rides(rct_peep *peep)
-{
-        // these peeps would not be available for activities
-    if (peep->state != PEEP_STATE_WALKING &&
-        peep->state != PEEP_STATE_PATROLLING)
-        return 0;
-
-        // this peep is on a cooldown
-    if (peep->peepex_event_countdown > 0)
-        return 0;
-    
-    uint32 interest = (peep->peepex_interest_in_rides >> 4);
-    interest *= 8 + interest / 2;
-    return min(interest, 0xFF);
-}
-
 void peepex_update_interest(rct_peep *peep)
 {
         // Every 10 seconds, increase our interest again. This way,
