@@ -20,12 +20,6 @@ const rct_xy16 peepex_tilestep[4] = {
     {   0, -32 }
 };
 
-static void colour_code_peep(rct_peep *peep, uint8 colour)
-{    
-    //peep->tshirt_colour     = colour;
-    //peep->trousers_colour   = colour;
-}
-
 void peepex_base_update(rct_peep *peep)
 {
     peepex_update_interest(peep);
@@ -45,19 +39,16 @@ void peepex_base_update(rct_peep *peep)
     switch (peep->state) {
     case PEEP_STATE_EX_WITNESSING_EVENT:
         peepex_update_witness_cont(peep);
-        colour_code_peep(peep, 10);
         break;
     case PEEP_STATE_EX_FOLLOWING_HAMELIN:
         peepex_update_hamelin_cont(peep);
-        colour_code_peep(peep, 20);
         break;
     case PEEP_STATE_EX_WATCHING_RIDE:
         peepex_update_watching_ride_cont(peep);
-        colour_code_peep(peep, 30);
         break;
-    default:
-        colour_code_peep(peep, 0);
     };
+
+    peepex_debug_colour_code(peep);
 }
 
 bool peepex_update_walking_find_activity(rct_peep *peep)

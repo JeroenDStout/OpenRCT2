@@ -171,4 +171,7 @@ enum {
 uint32 peepex_get_peep_random(rct_peep*, uint32 salt);
 void peepex_send_peep_to_self(rct_peep*);
 
+    // debug
+void peepex_debug_colour_code(rct_peep*);
+
 #endif
