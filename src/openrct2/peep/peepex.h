@@ -157,13 +157,14 @@ rct_xy16 peepex_pathing_clamp_path_regular(rct_map_element*, rct_peep *debugPeep
 void peepex_entertainer_per_tile(rct_peep *peep);
 void peepex_entertainer_does_event(rct_peep *peep);
 
-    // interests
+    // interests/behaviour
 void peepex_update_interest(rct_peep*);
 uint8 peepex_effective_peep_interest_in_generic_events(rct_peep *peep);
 uint8 peepex_effective_peep_interest_in_entertainers(rct_peep *peep);
 uint8 peepex_effective_peep_interest_in_generic_rides(rct_peep *peep);
 uint8 peepex_effective_peep_interest_in_exciting_rides(rct_peep *peep);
-
+uint32 peepex_get_appropriate_step_count(rct_peep *peep);
+    
     // functionality
 enum {
     PEEPEX_RANDOM_SALT_INTERESTS_0           = 0x1e4a5c16
