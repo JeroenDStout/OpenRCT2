@@ -1,6 +1,6 @@
 #include "peepex.h"
 
-#define DEBUG_COLOUR_CODE_BEHAVIOUR     1
+#define DEBUG_COLOUR_CODE_BEHAVIOUR     0
 #define DEBUG_COLOUR_CODE_CRIME         0
 
 void peepex_debug_colour_code(rct_peep *peep)
